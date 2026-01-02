@@ -1,22 +1,12 @@
-import { createServer } from "./server";
-import { PORT } from "./config";
-import { logger } from "./logger";
-import { startScheduler, stopScheduler } from "./scheduler";
-import { runRefresh } from "./worker";
+import { createServer } from "./server.js";
+import { PORT } from "./config.js";
+import { logger } from "./logger.js";
+import { startScheduler, stopScheduler } from "./scheduler.js";
+import { runRefresh } from "./worker.js";
 
 const app = createServer();
 
 async function start() {
-  // ensure initial refresh before server comes online
-  try {
-    logger.info("Performing initial refresh");
-    await runRefresh();
-  } catch (err) {
-    logger.error({ err }, "Initial refresh failed — continuing to start server");
-  }
-
-  startScheduler();
-
   try {
     await app.listen({ port: PORT, host: "0.0.0.0" });
     logger.info({ port: PORT }, "Server listening");

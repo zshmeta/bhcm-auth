@@ -25,16 +25,30 @@ export type AppConfig = {
   refreshTtlSec: number; // refresh token TTL in seconds
   maxSessionsPerUser: number; // cap to prevent unbounded session growth
   bcryptRounds: number; // hashing cost for passwords and refresh token hashes
+  corsOrigins: string[]; // explicit allowlist for CORS; use "*" only in dev
 };
 
 export function loadEnv(): AppConfig {
   const nodeEnv = process.env.NODE_ENV || "development";
-  const port = toInt(process.env.PORT, 4000);
-  const databaseUrl = process.env.DATABASE_URL || "postgresql://bhc:bhc@localhost:5432/bhc";
+  const port = toInt(process.env.PORT, 8080);
+  const databaseUrl = process.env.DATABASE_URL || "postgres://user:password@localhost:5432/bhcmarkets";
   const redisUrl = process.env.REDIS_URL;
 
   // IMPORTANT: use a strong secret in non-dev environments. For MVP we fallback in dev.
   const jwtSecret = process.env.JWT_SECRET || "dev-only-change-me";
+
+  if (!process.env.JWT_SECRET && !["development", "test"].includes(nodeEnv)) {
+    throw new Error("JWT_SECRET is required in non-development environments");
+  }
+
+  if (jwtSecret === "dev-only-change-me" && !["development", "test"].includes(nodeEnv)) {
+    throw new Error("Use a strong JWT_SECRET outside development/test");
+  }
+
+  const corsOrigins = (process.env.CORS_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   return {
     port,
@@ -46,6 +60,7 @@ export function loadEnv(): AppConfig {
     refreshTtlSec: toInt(process.env.REFRESH_TTL_SEC, 30 * 24 * 60 * 60), // 30d
     maxSessionsPerUser: toInt(process.env.MAX_SESSIONS_PER_USER, 10),
     bcryptRounds: toInt(process.env.BCRYPT_ROUNDS, 10),
+    corsOrigins,
   };
 }
 

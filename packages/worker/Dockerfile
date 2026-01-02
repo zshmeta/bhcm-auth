@@ -1,15 +1,17 @@
-FROM node:20-alpine AS base
+FROM node:20-alpine AS builder
 WORKDIR /app
-RUN curl -fsSL https://bun.sh/install | bash && \
-	ln -s /root/.bun/bin/bun /usr/local/bin/bun
 
-COPY package.json ../../package.json ./
-COPY ../../bun.lock ./bun.lock
-COPY ../../packages ./packages
-COPY ../../apps ./apps
-RUN bun install --frozen-lockfile
+COPY package.json package-lock.json turbo.json ./
+COPY packages ./packages
 
-WORKDIR /app/packages/worker
-# Placeholder build step; adjust when worker has TS build
-CMD ["node", "src/queue.ts"]
+RUN npm ci
+RUN npm run build --workspace=@repo/worker
 
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages/worker/dist ./dist
+COPY --from=builder /app/packages/worker/package.json ./package.json
+
+CMD ["node", "dist/index.js"]

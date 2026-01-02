@@ -4,7 +4,7 @@ This document defines the HTTP API surface for the trading platform. It focuses 
 
 ## Conventions
 
-- Base URL: `/api`
+- Base URL: `/`
 - Content-Type: `application/json`
 - All timestamps are ISO strings (UTC)
 - Monetary amounts are decimal strings
@@ -12,40 +12,40 @@ This document defines the HTTP API surface for the trading platform. It focuses 
 
 ## Auth
 
-- POST `/api/auth/login`
+- POST `/auth/login`
   - body: { email: string, password: string }
   - 200: { accessToken: string, refreshToken: string, user: User }
-- POST `/api/auth/refresh`
+- POST `/auth/refresh`
   - body: { refreshToken: string }
   - 200: { accessToken: string }
-- POST `/api/auth/logout`
+- POST `/auth/logout`
   - header: Authorization Bearer
   - 204
 
 ## Accounts
 
-- GET `/api/accounts`
+- GET `/accounts`
   - 200: Account[]
-- POST `/api/accounts`
+- POST `/accounts`
   - body: { currency: string, accountType?: "spot"|"margin"|"futures"|"demo" }
   - 201: Account
-- GET `/api/accounts/:id`
+- GET `/accounts/:id`
   - 200: Account
 
 ## Orders
 
-- GET `/api/accounts/:accountId/orders`
+- GET `/accounts/:accountId/orders`
   - 200: Order[]
-- POST `/api/orders`
+- POST `/orders`
   - headers: Idempotency-Key: string
-  - body: { accountId, symbol, side, type, price?, quantity }
+  - body: { userId, symbol, side, type, price?, quantity }
   - 201: Order
-- POST `/api/orders/:id/cancel`
+- POST `/orders/:id/cancel`
   - 204
 
 ## Trades
 
-- GET `/api/orders/:orderId/trades`
+- GET `/orders/:orderId/trades`
   - 200: Trade[]
 
 ## Health

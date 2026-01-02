@@ -11,6 +11,7 @@ export interface HttpRequest<TBody = unknown, TQuery = Record<string, string>, T
   params: TParams;
   headers: Record<string, string | undefined>;
   user?: { id: string; role?: string };
+  ipAddress?: string;
 }
 
 export interface HttpResponse<T = unknown> {

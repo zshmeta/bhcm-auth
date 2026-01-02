@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
-import { defaultPalette, paletteOrder, PaletteName } from "./palettes";
-import defaultTokens, { TokenTheme } from "./tokens";
+import { defaultPalette, paletteOrder, type PaletteName } from "./palettes";
+import defaultTokens, { type TokenTheme } from "./tokens";
 
 export type ThemePickerOption = {
   value: PaletteName;

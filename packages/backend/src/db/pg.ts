@@ -13,6 +13,9 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Pool } from "pg";
 
+import * as schema from "@repo/database";
+import { drizzle } from "drizzle-orm/node-postgres";
+
 export interface PgDeps { connectionString: string }
 
 export function createPgPool({ connectionString }: PgDeps) {
@@ -20,21 +23,11 @@ export function createPgPool({ connectionString }: PgDeps) {
   return pool;
 }
 
-export async function runMigrations(pool: Pool) {
-  // Simple idempotent guard: create a migrations table if not exists
-  await pool.query(
-    `CREATE TABLE IF NOT EXISTS __migrations (id TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now());`,
-  );
-
-  // For MVP we treat the schema.sql as a single migration id. The script drops tables, so
-  // running it twice will reset local data — fine for dev, unsafe for prod.
-  const migrationId = "001-bootstrap-auth-ledger";
-  const res = await pool.query(`SELECT 1 FROM __migrations WHERE id = $1`, [migrationId]);
-  if (res.rowCount && res.rowCount > 0) return; // already applied
-
-  const moduleDir = fileURLToPath(new URL(".", import.meta.url));
-  const schemaPath = join(moduleDir, "..", "..", "..", "database", "seed", "schema.sql");
-  const sql = readFileSync(schemaPath, "utf8");
-  await pool.query(sql);
-  await pool.query(`INSERT INTO __migrations (id) VALUES ($1)`, [migrationId]);
+export function createDrizzleClient(pool: Pool) {
+  return drizzle(pool, { schema });
 }
+
+export type DrizzleClient = ReturnType<typeof createDrizzleClient>;
+
+// Migrations are now handled by Drizzle via `npm run db:migrate`
+// export async function runMigrations(pool: Pool) { ... }

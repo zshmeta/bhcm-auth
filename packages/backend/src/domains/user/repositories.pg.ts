@@ -17,7 +17,7 @@ import type {
   UserSession,
   UserSessionRepository,
   UUID,
-} from "./user.types.js";
+} from "../auth/auth.types.js";
 
 type Row = Record<string, unknown>;
 

@@ -103,7 +103,7 @@ export const DashboardShell = () => (
           {menuItems.map((item) => (
             <MenuLink
               key={item.to}
-              as={NavLink}
+              as={NavLink as any}
               to={item.to}
               end={item.to === DASHBOARD_ROOT}
               label={item.label}

@@ -8,11 +8,10 @@
     "build": "tsc --project tsconfig.json",
     "lint": "eslint ."
   },
-  "dependencies": {
-    "@repo/utils": "*"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@repo/eslint-config": "*",
+    "eslint": "^9.34.0",
     "@repo/typescript-config": "*",
     "typescript": "5.9.2"
   }

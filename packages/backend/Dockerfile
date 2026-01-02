@@ -1,26 +1,22 @@
-FROM node:20-alpine AS base
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install bun for faster installs
-RUN curl -fsSL https://bun.sh/install | bash && \
-	ln -s /root/.bun/bin/bun /usr/local/bin/bun
+COPY package.json package-lock.json turbo.json ./
+COPY packages ./packages
 
-COPY package.json ../../package.json ./
-COPY ../../bun.lock ./bun.lock
-COPY ../../packages ./packages
-COPY ../../apps ./apps
+# Install
+RUN npm ci
 
-RUN bun install --frozen-lockfile
+# Build Backend
+RUN npm run build --workspace=@repo/backend
 
-WORKDIR /app/packages/backend
-RUN bun run build
-
+# Runner
 FROM node:20-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=base /app/packages/backend/dist ./dist
-COPY --from=base /app/packages/backend/package.json ./package.json
 
-EXPOSE 4000
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages/backend/dist ./dist
+COPY --from=builder /app/packages/backend/package.json ./package.json
+
+EXPOSE 8080
 CMD ["node", "dist/index.js"]
-

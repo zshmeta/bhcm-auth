@@ -1,11 +1,10 @@
-import { PropsWithChildren, useMemo, useState } from "react";
+// ThemeManager.tsx
+import { type PropsWithChildren, useMemo, useState } from "react";
 import { ThemeProvider } from "styled-components";
-import { defaultPalette, paletteOrder, palettes } from "./palettes";
+import { defaultPalette, paletteOrder, palettes, type PaletteName } from "./palettes";
 import { ThemePickerContext } from "./ThemeContext";
 import { createTokenTheme } from "./tokens";
 import GlobalStyle from "./GlobalStyle";
-
-type PaletteName = keyof typeof palettes;
 
 export type ThemeManagerProps = PropsWithChildren<{
   initialPalette?: PaletteName;
@@ -49,6 +48,7 @@ export const ThemeManager = ({ initialPalette = defaultPalette, children }: Them
   return (
     <ThemePickerContext.Provider value={contextValue}>
       <ThemeProvider theme={themeTokens}>
+        {/* @ts-expect-error React 18/19 type mismatch in monorepo */}
         <GlobalStyle />
         {children}
       </ThemeProvider>

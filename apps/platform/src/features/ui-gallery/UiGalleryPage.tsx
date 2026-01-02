@@ -120,7 +120,7 @@ const collectColorEntries = (colors: DefaultTheme["colors"] | undefined, prefix:
     }
 
     if (value && typeof value === "object") {
-      return collectColorEntries(value as DefaultTheme["colors"], path);
+      return collectColorEntries(value as unknown as DefaultTheme["colors"], path);
     }
 
     return [];

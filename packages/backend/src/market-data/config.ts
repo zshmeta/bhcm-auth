@@ -4,7 +4,7 @@ import { z } from "zod";
 dotenv.config();
 
 const schema = z.object({
-  PORT: z.coerce.number().int().positive().default(8080),
+  PORT: z.coerce.number().int().positive().default(8081),
   REFRESH_CRON: z.string().default("*/5 * * * *"),
   OUTPUT_DIR: z.string().default("./data"),
   SNAPSHOT_FILENAME: z.string().default("prices.json"),
@@ -17,6 +17,8 @@ const schema = z.object({
   HISTORY_MAX_FILES: z.coerce.number().int().nonnegative().default(2000),
   YF_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
   CG_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
+  REDIS_URL: z.string().default("redis://localhost:6379"),
+  DATABASE_URL: z.string().default("postgres://user:password@localhost:5432/bhcmarkets"),
   LOG_LEVEL: z.string().default("info")
 });
 
@@ -35,4 +37,6 @@ export const HISTORY_RETENTION_DAYS = cfg.HISTORY_RETENTION_DAYS;
 export const HISTORY_MAX_FILES = cfg.HISTORY_MAX_FILES;
 export const YF_TIMEOUT_MS = cfg.YF_TIMEOUT_MS;
 export const CG_TIMEOUT_MS = cfg.CG_TIMEOUT_MS;
+export const REDIS_URL = cfg.REDIS_URL;
+export const DATABASE_URL = cfg.DATABASE_URL;
 export const LOG_LEVEL = cfg.LOG_LEVEL;

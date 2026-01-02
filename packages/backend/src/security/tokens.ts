@@ -34,6 +34,7 @@ export interface TokenManager {
   issueAccessToken(payload: AccessTokenClaims, ttlSeconds: number): Promise<string>;
   issueRefreshToken(payload: RefreshTokenClaims, ttlSeconds: number): Promise<string>;
   parseRefreshToken(token: string): Promise<RefreshTokenClaims | null>;
+  parseAccessToken(token: string): Promise<AccessTokenClaims | null>;
 }
 
 export function createJwtTokenManager(secret: string): TokenManager {
@@ -65,6 +66,15 @@ export function createJwtTokenManager(secret: string): TokenManager {
         const { payload } = await jwtVerify(token, key, { algorithms: ["HS256"] });
         // Light runtime validation; the service verifies versions and expiry against DB.
         const claims = payload as unknown as RefreshTokenClaims;
+        return claims;
+      } catch {
+        return null;
+      }
+    },
+    async parseAccessToken(token) {
+      try {
+        const { payload } = await jwtVerify(token, key, { algorithms: ["HS256"] });
+        const claims = payload as unknown as AccessTokenClaims;
         return claims;
       } catch {
         return null;

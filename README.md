@@ -1,93 +1,70 @@
-# BHCMarkets
+# bhcmarkets - Advanced Trading Platform
 
-An industrial-grade, full‑stack trading platform monorepo. It includes:
+## Overview
+**bhcmarkets** is a production-grade trading platform designed to mimic the functionality of professional platforms like MetaTrader 4 (MT4) and cTrader. It features a modern, high-performance frontend built with React and a robust backend powered by Node.js, PostgreSQL, and Redis.
 
-- Web apps: user platform (`apps/platform`), marketing site (`apps/web`), admin dashboard (`apps/admin`), and docs (`apps/docs`).
-- Backend services under `packages/` (API, worker, utils, database schema, UI library, shared types).
-- Shared tooling via Turborepo, ESLint flat config, and TypeScript project references.
+The platform includes:
+-   **Real-time Market Data**: Streaming prices via WebSockets (Socket.IO).
+-   **Order Management System (OMS)**: Support for Market and Limit orders, with a full matching engine.
+-   **User Management**: Secure authentication (JWT), account balances, and an Admin Dashboard for funding.
+-   **Workspace UI**: A customizable trading interface with charts, watchlists, and order entry panels.
 
-This repo aims for a transparent, annotated buildout: we document the “why” and the “what” as we go. See `docs/` for architecture notes and decisions.
+## Architecture
+-   **Frontend**: React, Vite, Styled Components.
+-   **Backend**: Node.js (TypeScript).
+-   **Database**: PostgreSQL (User/Order data), Redis (Market Data/Snapshots).
+-   **Infrastructure**: Docker Compose for local development.
 
-## Prerequisites
+## Getting Started
 
-- Node.js 18+ (20+ recommended)
-- Bun 1.3+ (we standardize on Bun for workspaces and scripts)
-- Git
+### Prerequisites
+-   Node.js (v18+)
+-   Docker & Docker Compose
+-   Bun (optional, but recommended for monorepo management)
 
-Optional for local infra:
-- Docker + Docker Compose (for Postgres/Redis)
+### Installation
+1.  Clone the repository.
+2.  Install dependencies:
+    ```bash
+    npm install
+    # or
+    bun install
+    ```
 
-## Getting started
+### Running the Platform
+1.  **Start Infrastructure** (Postgres & Redis):
+    ```bash
+    npm run db:start
+    ```
+    *Note: If you encounter permission errors with Docker volumes on Linux, try running `sudo chown -R 1000:1000 pgdata` or removing the volume if it persists.*
 
-Install dependencies at the root:
+2.  **Run Migrations**:
+    ```bash
+    npm run db:migrate
+    ```
 
-```bash
-bun install
-```
+3.  **Start Development Servers**:
+    ```bash
+    npm run dev
+    ```
+    This will start:
+    -   Frontend: http://localhost:5173
+    -   Backend API: http://localhost:8080
+    -   Market Data (HTTP + Socket.IO): http://localhost:8081
 
-Run all apps in dev (concurrently via Turborepo):
+### Usage Guide
+1.  **Register**: Go to `http://localhost:5173/auth` and create an account.
+2.  **Fund Account**:
+    -   Navigate to `http://localhost:5173/admin`.
+    -   Find your user and click "Manage Funds".
+    -   Deposit test funds (e.g., $10,000).
+3.  **Trade**:
+    -   Go to `http://localhost:5173/app/trade`.
+    -   Select a symbol from the Watchlist.
+    -   Use the Order Entry panel to buy or sell.
+    -   View your positions in the Terminal panel.
 
-```bash
-bun run dev
-```
-
-Run a specific app, e.g. platform:
-
-```bash
-cd apps/platform
-bun run dev
-```
-
-Type checking and linting:
-
-```bash
-bun run check-types
-bun run lint
-```
-
-Format code:
-
-```bash
-bun run format
-```
-
-## Local services (optional)
-
-We provide a basic `docker-compose.yml` with Postgres and Redis for local development:
-
-```bash
-docker compose up -d
-```
-
-Database DDL/seed lives under `packages/database/seed/schema.sql`.
-
-## Project structure
-
-High-level overview is in `docs/architecture.md`. A short version:
-
-- `apps/*` — deployable frontends (Vite/React, Next.js for docs)
-- `packages/backend` — Node HTTP API bootstrap (will evolve to Fastify/Express)
-- `packages/worker` — background jobs (BullMQ-like pattern planned)
-- `packages/ui` — shared UI library (styled-components)
-- `packages/types` — shared TypeScript domain types
-- `packages/utils` — cross-cutting helpers
-- `packages/database` — schema and migrations
-
-## Decisions and standards
-
-- We use Bun as the package manager to speed up installs and scripts. See `docs/decisions/0001-choose-bun-monorepo.md`.
-- Flat ESLint config lives in `packages/eslint-config/*`; apps/packages extend it.
-- TypeScript base config is in `packages/typescript-config/*`.
-- CI runs lint and type checks on PRs. See `.github/workflows/ci.yml`.
-- Architecture docs: see `docs/architecture.md`, `docs/domain-overview.md`, `docs/api-contracts.md`, `docs/events.md`, `docs/errors.md`, and `docs/security.md`.
-
-## Contributing
-
-Please read `CONTRIBUTING.md` for branching, commit style, and PR expectations, and `CODE_OF_CONDUCT.md` for community guidelines.
-
-## Roadmap (excerpt)
-
-- Implement domain repositories (Accounts, Orders, Trades, Ledger) backed by Postgres
-- Real-time market data ingestion and WS broadcasting
-- Order lifecycle, risk checks, and PnL computation
-- Admin observability (metrics, audit logs) and RBAC
+## Troubleshooting
+-   **Docker Permission Denied**: Ensure your user has permissions to the docker socket and the volume directories.
+-   **Market Data Not Connecting**: Ensure the market-data service is running on port 8081 (see `packages/backend/src/market-data/config.ts`).
+-   **Login Fails**: Check the backend logs for database connection errors.

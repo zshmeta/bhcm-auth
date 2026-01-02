@@ -1,55 +1,97 @@
-version: '3.9'
 services:
   postgres:
-    image: postgres:16
+    image: postgres:15-alpine
     environment:
-      POSTGRES_USER: bhc
-      POSTGRES_PASSWORD: bhc
-      POSTGRES_DB: bhc
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bhcmarkets
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "bhc"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@bhcmarkets.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      - postgres_data:/var/lib/postgresql/data
 
   redis:
-    image: redis:7
+    image: redis:alpine
+    command: redis-server --appendonly yes
     ports:
       - "6379:6379"
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
-      - ./docker/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - redis_data:/data
 
   backend:
     build:
       context: .
       dockerfile: packages/backend/Dockerfile
-    command: ["node", "dist/index.js"]
     environment:
-      NODE_ENV: development
-      PORT: 4000
-      DATABASE_URL: postgresql://bhc:bhc@postgres:5432/bhc
+      DATABASE_URL: postgres://user:password@postgres:5432/bhcmarkets
+      REDIS_URL: redis://redis:6379
+      PORT: 8080
+      JWT_SECRET: supersecretjwtkey
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+
+  worker:
+    build:
+      context: .
+      dockerfile: packages/worker/Dockerfile
+    environment:
+      DATABASE_URL: postgres://user:password@postgres:5432/bhcmarkets
       REDIS_URL: redis://redis:6379
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
+      - postgres
+      - redis
+
+  market-maker:
+    build:
+      context: .
+      dockerfile: packages/market-maker/Dockerfile
+    environment:
+      API_URL: http://backend:8080
+      WS_URL: http://backend:8080
+      MM_EMAIL: mm@bhc.com
+      MM_PASSWORD: marketmaker
+    depends_on:
+      - backend
+
+  platform:
+    build:
+      context: .
+      dockerfile: apps/platform/Dockerfile
     ports:
-      - "4000:4000"
-    volumes:
-      - ./packages/backend:/app
+      - "3000:80"
+    depends_on:
+      - backend
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3003:80"
+    depends_on:
+      - backend
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+
+  docs:
+    build:
+      context: .
+      dockerfile: apps/docs/Dockerfile
+    ports:
+      - "3002:3000"
+    environment:
+      PORT: 3000
 
 volumes:
-  pgdata:
-
+  postgres_data:
+  redis_data:

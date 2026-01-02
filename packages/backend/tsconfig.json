@@ -1,17 +1,20 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@repo/typescript-config/base.json",
+  "ignoreDeprecations": "6.0",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "baseUrl": ".",
     "ignoreDeprecations": "6.0",
-    "types": ["node"],
-    "paths": {
-      "@repo/types": ["../types/index.ts"],
-      "@repo/types/*": ["../types/*"]
-    }
+    "types": [
+      "node"
+    ]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["dist", "node_modules"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
 }

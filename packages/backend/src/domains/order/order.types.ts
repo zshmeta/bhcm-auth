@@ -32,3 +32,10 @@ export interface OrderRepository {
   create(input: PlaceOrderInput): Promise<Order>;
   updateStatus(id: UUID, status: OrderStatus): Promise<void>;
 }
+
+export interface OrderService {
+  place(input: PlaceOrderInput): Promise<Order>;
+  cancel(id: UUID): Promise<void>;
+  get(id: UUID): Promise<Order | null>;
+  listByAccount(accountId: UUID): Promise<Order[]>;
+}

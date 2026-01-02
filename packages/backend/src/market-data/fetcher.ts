@@ -12,8 +12,8 @@ import pLimit from "p-limit";
 import pRetry from "p-retry";
 import pTimeout from "p-timeout";
 import { promises as fs } from "fs";
-import { CONCURRENCY, RETRY_RETRIES, RETRY_FACTOR, SYMBOLS_PATH, YF_TIMEOUT_MS, CG_TIMEOUT_MS } from "./config";
-import { logger } from "./logger";
+import { CONCURRENCY, RETRY_RETRIES, RETRY_FACTOR, SYMBOLS_PATH, YF_TIMEOUT_MS, CG_TIMEOUT_MS } from "./config.js";
+import { logger } from "./logger.js";
 
 const limit = pLimit(CONCURRENCY);
 
@@ -202,7 +202,7 @@ export async function fetchAll(): Promise<Record<Category, Record<string, any>>>
   if (cryptoDefs.length > 0) {
     const ids = cryptoDefs
       .map((d) => {
-        const sym = d.symbol.split("-")[0].replace(/-USD$/i, "").toUpperCase();
+        const sym = d.symbol.split("-")[0]!.replace(/-USD$/i, "").toUpperCase();
         return CG_SYMBOL_MAP[sym];
       })
       .filter(Boolean) as string[];
@@ -214,7 +214,7 @@ export async function fetchAll(): Promise<Record<Category, Record<string, any>>>
           factor: RETRY_FACTOR
         });
         for (const def of cryptoDefs) {
-          const symKey = def.symbol.split("-")[0].replace(/-USD$/i, "").toUpperCase();
+          const symKey = def.symbol.split("-")[0]!.replace(/-USD$/i, "").toUpperCase();
           const id = CG_SYMBOL_MAP[symKey];
           const market = markets.find((m: any) => m.id === id);
           if (market) {

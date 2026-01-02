@@ -1,5 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
-import styled, { css } from "styled-components";
+import styled, { css, type DefaultTheme } from "styled-components";
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "subtle" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
@@ -10,7 +10,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 	icon?: ReactNode;
 }
 
-const buttonVariants = (theme: any) => ({
+const buttonVariants = (theme: DefaultTheme) => ({
 	primary: css`
 		background: ${theme.gradients.primary};
 		color: ${theme.colors.text.onAccent};
@@ -56,7 +56,7 @@ const buttonVariants = (theme: any) => ({
 	`,
 });
 
-const buttonSizes = (theme: any) => ({
+const buttonSizes = (theme: DefaultTheme) => ({
 	sm: css`
 		height: 34px;
 		padding: 0 ${theme.spacing.sm};
