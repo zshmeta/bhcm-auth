@@ -10,6 +10,47 @@ const Form = styled.form`
   width: 100%;
 `;
 
+<<<<<<< HEAD
+=======
+const ErrorMessage = styled.div`
+  padding: ${({ theme }) => theme.spacing.md};
+  background: rgba(255, 90, 95, 0.08);
+  border: 1px solid rgba(255, 90, 95, 0.25);
+  border-radius: ${({ theme }) => theme.radii.md};
+  color: ${({ theme }) => theme.colors.status.danger};
+  font-size: ${({ theme }) => theme.typography.sizes.sm};
+  line-height: ${({ theme }) => theme.typography.lineHeights.normal};
+  display: flex;
+  align-items: start;
+  gap: ${({ theme }) => theme.spacing.sm};
+
+  &::before {
+    content: "⚠";
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+`;
+
+const SuccessMessage = styled.div`
+  padding: ${({ theme }) => theme.spacing.md};
+  background: rgba(50, 215, 75, 0.08);
+  border: 1px solid rgba(50, 215, 75, 0.25);
+  border-radius: ${({ theme }) => theme.radii.md};
+  color: ${({ theme }) => theme.colors.status.success};
+  font-size: ${({ theme }) => theme.typography.sizes.sm};
+  line-height: ${({ theme }) => theme.typography.lineHeights.normal};
+  display: flex;
+  align-items: start;
+  gap: ${({ theme }) => theme.spacing.sm};
+
+  &::before {
+    content: "✓";
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+`;
+
+>>>>>>> 644203f (Add password reset, loading states, success page and accessibility improvements)
 const InfoMessage = styled.div`
   padding: ${({ theme }) => theme.spacing.md};
   background: rgba(63, 140, 255, 0.08);
@@ -51,26 +92,42 @@ export interface PasswordResetFormProps {
 export const PasswordResetForm = ({ onBackToLogin }: PasswordResetFormProps) => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+<<<<<<< HEAD
   const [emailSent, setEmailSent] = useState(false);
 
   const { showSuccess, showError } = useToast();
+=======
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+>>>>>>> 644203f (Add password reset, loading states, success page and accessibility improvements)
   const authClient = createAuthClient();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+<<<<<<< HEAD
+=======
+    setError(null);
+    setSuccess(false);
+>>>>>>> 644203f (Add password reset, loading states, success page and accessibility improvements)
     setLoading(true);
 
     try {
       await authClient.requestPasswordReset({ email: email.trim() });
+<<<<<<< HEAD
       setEmailSent(true);
       showSuccess(
         "If an account exists with that email, we've sent password reset instructions. Please check your inbox and spam folder.",
         "Email Sent"
       );
+=======
+      setSuccess(true);
+>>>>>>> 644203f (Add password reset, loading states, success page and accessibility improvements)
     } catch (err) {
       if (err instanceof ApiError) {
         switch (err.code) {
           case "NETWORK_ERROR":
+<<<<<<< HEAD
             showError("Network error. Please check your connection and try again.", "Connection Error");
             break;
           default:
@@ -83,6 +140,16 @@ export const PasswordResetForm = ({ onBackToLogin }: PasswordResetFormProps) => 
         }
       } else {
         showError(err instanceof Error ? err.message : "Failed to send reset email.", "Error");
+=======
+            setError("Network error. Please check your connection and try again.");
+            break;
+          default:
+            // For security, don't reveal if email exists or not
+            setSuccess(true);
+        }
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to send reset email.");
+>>>>>>> 644203f (Add password reset, loading states, success page and accessibility improvements)
       }
     } finally {
       setLoading(false);
@@ -101,6 +168,7 @@ export const PasswordResetForm = ({ onBackToLogin }: PasswordResetFormProps) => 
         Enter your email address and we'll send you a link to reset your password.
       </InfoMessage>
 
+<<<<<<< HEAD
       <Tooltip content="We'll send a secure link to this email address" placement="top">
         <EmailInput
           id="email"
@@ -121,6 +189,34 @@ export const PasswordResetForm = ({ onBackToLogin }: PasswordResetFormProps) => 
       </Button>
 
       {emailSent && onBackToLogin && (
+=======
+      {error && <ErrorMessage>{error}</ErrorMessage>}
+      {success && (
+        <SuccessMessage>
+          If an account exists with that email, we've sent password reset instructions.
+          Please check your inbox and spam folder.
+        </SuccessMessage>
+      )}
+
+      <TextField
+        id="email"
+        type="email"
+        label="Email Address"
+        placeholder="you@company.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+        disabled={loading || success}
+        autoComplete="email"
+        autoFocus
+      />
+
+      <Button type="submit" disabled={loading || success} loading={loading} fullWidth size="lg">
+        {loading ? "Sending..." : success ? "Email Sent" : "Send Reset Link"}
+      </Button>
+
+      {success && onBackToLogin && (
+>>>>>>> 644203f (Add password reset, loading states, success page and accessibility improvements)
         <Button
           type="button"
           variant="outline"
