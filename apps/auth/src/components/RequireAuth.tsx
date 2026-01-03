@@ -1,5 +1,6 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { Loader } from "@repo/ui";
 import { useAuth } from "./AuthContext";
 
 export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -7,7 +8,7 @@ export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children 
   const location = useLocation();
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <Loader />;
   }
 
   if (!isAuthenticated) {

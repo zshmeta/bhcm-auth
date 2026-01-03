@@ -1,5 +1,5 @@
 import { forwardRef, useState, type InputHTMLAttributes } from "react";
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 
 export interface EmailInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
 	label?: string;
@@ -61,8 +61,8 @@ const StyledInput = styled.input<{ $hasError: boolean; $isValid: boolean }>`
 	&:focus {
 		border-color: \${({ theme, $hasError }) =>
 			$hasError ? theme.colors.status.danger : theme.colors.primary};
-		box-shadow: 0 0 0 4px \${({ theme, $hasError }) =>
-			$hasError ? 'rgba(255, 90, 95, 0.2)' : theme.colors.focus};
+		// Use the shared focus token to avoid hard-coded, non-theme colors.
+		box-shadow: 0 0 0 4px ${({ theme }) => theme.colors.focus};
 	}
 
 	&:disabled {
@@ -72,15 +72,17 @@ const StyledInput = styled.input<{ $hasError: boolean; $isValid: boolean }>`
 	}
 `;
 
-const IconWrapper = styled.span<{ $type: 'icon' | 'status' }>`
+const IconWrapper = styled.span<{ $type: 'icon' | 'status'; $status?: 'success' | 'danger' }>`
 	position: absolute;
 	right: \${({ theme }) => theme.spacing.md};
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	pointer-events: none;
-	color: \${({ theme, $type }) =>
-		$type === 'status' ? 'currentColor' : theme.colors.text.tertiary};
+	color: ${({ theme, $type, $status }) => {
+		if ($type !== 'status') return theme.colors.text.tertiary;
+		return $status === 'success' ? theme.colors.status.success : theme.colors.status.danger;
+	}};
 	font-size: 18px;
 `;
 
@@ -122,16 +124,18 @@ export const EmailInput = forwardRef<HTMLInputElement, EmailInputProps>(
 						{...props}
 					/>
 					{showValidation && currentValue.length > 0 && (
-						<IconWrapper $type="status">
+						<IconWrapper
+							$type="status"
+							$status={isValid ? 'success' : 'danger'}
+						>
 							{isValid ? (
-								<span style={{ color: '#3BCF7C' }}>✓</span>
+								<span style={{ color: 'currentColor' }}>✓</span>
 							) : (
-								<span style={{ color: '#FF5A5F' }}>✕</span>
+								<span style={{ color: 'currentColor' }}>✕</span>
 							)}
 						</IconWrapper>
 					)}
-						<IconWrapper $type="icon">@</IconWrapper>
-					)}
+					<IconWrapper $type="icon">@</IconWrapper>
 				</InputContainer>
 				{(error || helpText) && (
 					<HelpText $isError={hasError}>{error || helpText}</HelpText>

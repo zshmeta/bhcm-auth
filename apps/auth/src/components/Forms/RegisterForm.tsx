@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import styled from "styled-components";
-import { Button, TextField } from "@repo/ui";
-import { createAuthClient, type RegisterRequest } from "@repo/api-client";
+import { Button, EmailInput, Notification, PasswordInput } from "@repo/ui";
+import { authApi } from "../../lib/authApi";
 import { useAuth } from "../AuthContext";
 
 const Form = styled.form`
@@ -11,22 +11,10 @@ const Form = styled.form`
   width: 100%;
 `;
 
-const ErrorMessage = styled.div`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  background: rgba(255, 90, 95, 0.1);
-  border: 1px solid rgba(255, 90, 95, 0.3);
-  border-radius: ${({ theme }) => theme.radii.md};
-  color: ${({ theme }) => theme.colors.status.danger};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-`;
-
-const SuccessMessage = styled.div`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  background: rgba(50, 215, 75, 0.1);
-  border: 1px solid rgba(50, 215, 75, 0.3);
-  border-radius: ${({ theme }) => theme.radii.md};
-  color: ${({ theme }) => theme.colors.status.success};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
+const Banner = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
 `;
 
 export interface RegisterFormProps {
@@ -43,7 +31,6 @@ export const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
   const [success, setSuccess] = useState(false);
 
   const { login } = useAuth();
-  const authClient = createAuthClient();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -63,13 +50,7 @@ export const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
     setLoading(true);
 
     try {
-      const registerData: RegisterRequest = {
-        email: email.trim(),
-        password,
-        issueSession: true,
-      };
-
-      const result = await authClient.register(registerData);
+      const result = await authApi.register({ email: email.trim(), password, issueSession: true });
 
       if ("tokens" in result) {
         login(result.user, result.tokens.accessToken, result.tokens.refreshToken);
@@ -91,36 +72,39 @@ export const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
 
   return (
     <Form onSubmit={handleSubmit}>
-      {error && <ErrorMessage>{error}</ErrorMessage>}
-      {success && <SuccessMessage>Registration successful! Redirecting...</SuccessMessage>}
+      {(error || success) && (
+        <Banner>
+		  {error && <Notification variant="danger" title="Sign-up failed" message={error} />}
+		  {success && <Notification variant="success" title="Account created" message="Redirecting…" />}
+        </Banner>
+      )}
 
-      <TextField
+      <EmailInput
         id="email"
-        type="email"
         label="Email"
         placeholder="your@email.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
         disabled={loading}
-        helperText="We'll never share your email with anyone else."
+        helpText="We'll never share your email with anyone else."
+        showValidation
       />
 
-      <TextField
+      <PasswordInput
         id="password"
-        type="password"
         label="Password"
         placeholder="••••••••"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
         disabled={loading}
-        helperText="Minimum 8 characters"
+        helpText="Minimum 8 characters"
+        showStrength
       />
 
-      <TextField
+      <PasswordInput
         id="confirmPassword"
-        type="password"
         label="Confirm Password"
         placeholder="••••••••"
         value={confirmPassword}
@@ -129,12 +113,12 @@ export const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
         disabled={loading}
       />
 
-      <Button type="submit" disabled={loading}>
+      <Button type="submit" disabled={loading} loading={loading} fullWidth>
         {loading ? "Creating account..." : "Sign Up"}
       </Button>
 
       {onSwitchToLogin && (
-        <Button type="button" variant="subtle" onClick={onSwitchToLogin} disabled={loading}>
+        <Button type="button" variant="ghost" onClick={onSwitchToLogin} disabled={loading} fullWidth>
           Already have an account? Log in
         </Button>
       )}

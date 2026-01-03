@@ -20,6 +20,7 @@ export * from "./Inputs/NumInput";
 export * from "./Inputs/PhoneInput";
 export * from "./Inputs/SearchInput";
 export * from "./Inputs/AddressInput";
+export * from "./Inputs/DatePicker";
 
 // Information Components
 export * from "./Informations/Modal";
@@ -28,6 +29,7 @@ export * from "./Informations/Tooltip";
 export * from "./Informations/Loader";
 export * from "./Informations/Progress";
 export * from "./Informations/Notification";
+export * from "./Informations/Alert";
 
 // Menu Components
 export * from "./Menus/Checkbox";

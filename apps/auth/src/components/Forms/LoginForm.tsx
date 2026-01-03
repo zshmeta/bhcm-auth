@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import styled from "styled-components";
-import { Button, TextField } from "@repo/ui";
-import { createAuthClient, type LoginRequest } from "@repo/api-client";
+import { Button, EmailInput, Notification, PasswordInput } from "@repo/ui";
+import { authApi } from "../../lib/authApi";
 import { useAuth } from "../AuthContext";
 
 const Form = styled.form`
@@ -11,22 +11,10 @@ const Form = styled.form`
   width: 100%;
 `;
 
-const ErrorMessage = styled.div`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  background: rgba(255, 90, 95, 0.1);
-  border: 1px solid rgba(255, 90, 95, 0.3);
-  border-radius: ${({ theme }) => theme.radii.md};
-  color: ${({ theme }) => theme.colors.status.danger};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-`;
-
-const SuccessMessage = styled.div`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  background: rgba(50, 215, 75, 0.1);
-  border: 1px solid rgba(50, 215, 75, 0.3);
-  border-radius: ${({ theme }) => theme.radii.md};
-  color: ${({ theme }) => theme.colors.status.success};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
+const Banner = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
 `;
 
 export interface LoginFormProps {
@@ -42,7 +30,8 @@ export const LoginForm = ({ onSuccess, onSwitchToSignup }: LoginFormProps) => {
   const [success, setSuccess] = useState(false);
 
   const { login } = useAuth();
-  const authClient = createAuthClient();
+
+  // Keep the error string generic; avoid account enumeration.
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -51,12 +40,7 @@ export const LoginForm = ({ onSuccess, onSwitchToSignup }: LoginFormProps) => {
     setLoading(true);
 
     try {
-      const loginData: LoginRequest = {
-        email: email.trim(),
-        password,
-      };
-
-      const result = await authClient.login(loginData);
+      const result = await authApi.login({ email: email.trim(), password });
       login(result.user, result.tokens.accessToken, result.tokens.refreshToken);
 
       setSuccess(true);
@@ -75,23 +59,26 @@ export const LoginForm = ({ onSuccess, onSwitchToSignup }: LoginFormProps) => {
 
   return (
     <Form onSubmit={handleSubmit}>
-      {error && <ErrorMessage>{error}</ErrorMessage>}
-      {success && <SuccessMessage>Login successful! Redirecting...</SuccessMessage>}
+      {(error || success) && (
+        <Banner>
+		  {error && <Notification variant="danger" title="Sign-in failed" message={error} />}
+		  {success && <Notification variant="success" title="Signed in" message="Redirecting…" />}
+        </Banner>
+      )}
 
-      <TextField
+      <EmailInput
         id="email"
-        type="email"
         label="Email"
         placeholder="your@email.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
         disabled={loading}
+        showValidation
       />
 
-      <TextField
+      <PasswordInput
         id="password"
-        type="password"
         label="Password"
         placeholder="••••••••"
         value={password}
@@ -100,12 +87,12 @@ export const LoginForm = ({ onSuccess, onSwitchToSignup }: LoginFormProps) => {
         disabled={loading}
       />
 
-      <Button type="submit" disabled={loading}>
+      <Button type="submit" disabled={loading} loading={loading} fullWidth>
         {loading ? "Logging in..." : "Log In"}
       </Button>
 
       {onSwitchToSignup && (
-        <Button type="button" variant="subtle" onClick={onSwitchToSignup} disabled={loading}>
+        <Button type="button" variant="ghost" onClick={onSwitchToSignup} disabled={loading} fullWidth>
           Don't have an account? Sign up
         </Button>
       )}
