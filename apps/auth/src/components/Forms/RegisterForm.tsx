@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from "react";
 import styled from "styled-components";
-import { Button, TextField } from "@repo/ui";
+import { Button, EmailInput, PasswordInput } from "@repo/ui";
 import { createAuthClient, type RegisterRequest, ApiError } from "../../lib/api-client";
 import { useAuth } from "../AuthContext";
+import { useToast } from "../ToastContext";
 
 const Form = styled.form`
   display: flex;
@@ -11,64 +12,8 @@ const Form = styled.form`
   width: 100%;
 `;
 
-const ErrorMessage = styled.div`
-  padding: ${({ theme }) => theme.spacing.md};
-  background: rgba(255, 90, 95, 0.08);
-  border: 1px solid rgba(255, 90, 95, 0.25);
-  border-radius: ${({ theme }) => theme.radii.md};
-  color: ${({ theme }) => theme.colors.status.danger};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  line-height: ${({ theme }) => theme.typography.lineHeights.normal};
-  display: flex;
-  align-items: start;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  &::before {
-    content: "⚠";
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-`;
-
-const SuccessMessage = styled.div`
-  padding: ${({ theme }) => theme.spacing.md};
-  background: rgba(50, 215, 75, 0.08);
-  border: 1px solid rgba(50, 215, 75, 0.25);
-  border-radius: ${({ theme }) => theme.radii.md};
-  color: ${({ theme }) => theme.colors.status.success};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  line-height: ${({ theme }) => theme.typography.lineHeights.normal};
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  &::before {
-    content: "✓";
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-`;
-
 const PasswordStrength = styled.div<{ $strength: number }>`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.xxs};
-  margin-top: -${({ theme }) => theme.spacing.xs};
-`;
-
-const StrengthBar = styled.div<{ $active: boolean; $strength: number }>`
-  flex: 1;
-  height: 4px;
-  border-radius: ${({ theme }) => theme.radii.xs};
-  background: ${({ $active, $strength, theme }) => {
-    if (!$active) return theme.colors.border.subtle;
-    if ($strength <= 1) return theme.colors.status.danger;
-    if ($strength === 2) return theme.colors.warning;
-    return theme.colors.status.success;
-  }};
-  transition: all 0.3s ease;
-`;
-
-const PasswordHint = styled.div<{ $strength: number }>`
+  margin-top: ${({ theme }) => theme.spacing.xs};
   font-size: ${({ theme }) => theme.typography.sizes.xs};
   color: ${({ $strength, theme }) => {
     if ($strength === 0) return theme.colors.text.muted;
@@ -76,7 +21,6 @@ const PasswordHint = styled.div<{ $strength: number }>`
     if ($strength === 2) return theme.colors.warning;
     return theme.colors.status.success;
   }};
-  margin-top: -${({ theme }) => theme.spacing.xs};
   line-height: ${({ theme }) => theme.typography.lineHeights.snug};
 `;
 
@@ -136,8 +80,9 @@ const calculatePasswordStrength = (password: string): number => {
   return Math.min(3, Math.floor(strength / 2));
 };
 
-const getPasswordHintText = (strength: number): string => {
-  if (strength === 0) return "Password must be at least 8 characters";
+const getPasswordHintText = (strength: number, showStrength: boolean): string => {
+  if (!showStrength) return "";
+  if (strength === 0) return "";
   if (strength === 1) return "Weak password - add uppercase, numbers, or symbols";
   if (strength === 2) return "Good password - consider adding more complexity";
   return "Strong password";
@@ -148,31 +93,28 @@ export const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   const { login } = useAuth();
+  const { showSuccess, showError } = useToast();
   const authClient = createAuthClient();
 
   const passwordStrength = calculatePasswordStrength(password);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(false);
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      showError("Passwords do not match", "Validation Error");
       return;
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters long");
+      showError("Password must be at least 8 characters long", "Validation Error");
       return;
     }
 
     if (passwordStrength < 1) {
-      setError("Password is too weak. Please use a stronger password.");
+      showError("Password is too weak. Please use a stronger password.", "Weak Password");
       return;
     }
 
@@ -191,7 +133,7 @@ export const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
         login(result.user, result.tokens.accessToken, result.tokens.refreshToken);
       }
 
-      setSuccess(true);
+      showSuccess("Registration successful! Redirecting...", "Welcome");
 
       if (onSuccess) {
         setTimeout(() => {
@@ -202,16 +144,16 @@ export const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
       if (err instanceof ApiError) {
         switch (err.code) {
           case "EMAIL_ALREADY_REGISTERED":
-            setError("This email is already registered. Please sign in instead.");
+            showError("This email is already registered. Please sign in instead.", "Email Already Exists");
             break;
           case "NETWORK_ERROR":
-            setError("Network error. Please check your connection and try again.");
+            showError("Network error. Please check your connection and try again.", "Connection Error");
             break;
           default:
-            setError("Registration failed. Please try again.");
+            showError("Registration failed. Please try again.", "Error");
         }
       } else {
-        setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
+        showError(err instanceof Error ? err.message : "Registration failed. Please try again.", "Error");
       }
     } finally {
       setLoading(false);
@@ -220,13 +162,9 @@ export const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
 
   return (
     <Form onSubmit={handleSubmit}>
-      {error && <ErrorMessage>{error}</ErrorMessage>}
-      {success && <SuccessMessage>Registration successful! Redirecting...</SuccessMessage>}
-
       <InputGroup>
-        <TextField
+        <EmailInput
           id="email"
-          type="email"
           label="Email Address"
           placeholder="you@company.com"
           value={email}
@@ -235,12 +173,12 @@ export const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
           disabled={loading}
           autoComplete="email"
           autoFocus
+          showValidation
         />
 
         <div>
-          <TextField
+          <PasswordInput
             id="password"
-            type="password"
             label="Password"
             placeholder="Create a strong password"
             value={password}
@@ -248,28 +186,18 @@ export const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
             required
             disabled={loading}
             autoComplete="new-password"
+            showStrength
+            helpText="Minimum 8 characters"
           />
-          {password && (
-            <>
-              <PasswordStrength $strength={passwordStrength}>
-                {[0, 1, 2, 3].map((i) => (
-                  <StrengthBar
-                    key={i}
-                    $active={i < passwordStrength}
-                    $strength={passwordStrength}
-                  />
-                ))}
-              </PasswordStrength>
-              <PasswordHint $strength={passwordStrength}>
-                {getPasswordHintText(passwordStrength)}
-              </PasswordHint>
-            </>
+          {password && passwordStrength > 0 && (
+            <PasswordStrength $strength={passwordStrength}>
+              {getPasswordHintText(passwordStrength, true)}
+            </PasswordStrength>
           )}
         </div>
 
-        <TextField
+        <PasswordInput
           id="confirmPassword"
-          type="password"
           label="Confirm Password"
           placeholder="Re-enter your password"
           value={confirmPassword}

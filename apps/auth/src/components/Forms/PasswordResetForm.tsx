@@ -10,44 +10,6 @@ const Form = styled.form`
   width: 100%;
 `;
 
-const ErrorMessage = styled.div`
-  padding: ${({ theme }) => theme.spacing.md};
-  background: rgba(255, 90, 95, 0.08);
-  border: 1px solid rgba(255, 90, 95, 0.25);
-  border-radius: ${({ theme }) => theme.radii.md};
-  color: ${({ theme }) => theme.colors.status.danger};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  line-height: ${({ theme }) => theme.typography.lineHeights.normal};
-  display: flex;
-  align-items: start;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  &::before {
-    content: "⚠";
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-`;
-
-const SuccessMessage = styled.div`
-  padding: ${({ theme }) => theme.spacing.md};
-  background: rgba(50, 215, 75, 0.08);
-  border: 1px solid rgba(50, 215, 75, 0.25);
-  border-radius: ${({ theme }) => theme.radii.md};
-  color: ${({ theme }) => theme.colors.status.success};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  line-height: ${({ theme }) => theme.typography.lineHeights.normal};
-  display: flex;
-  align-items: start;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  &::before {
-    content: "✓";
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-`;
-
 const InfoMessage = styled.div`
   padding: ${({ theme }) => theme.spacing.md};
   background: rgba(63, 140, 255, 0.08);
@@ -89,32 +51,38 @@ export interface PasswordResetFormProps {
 export const PasswordResetForm = ({ onBackToLogin }: PasswordResetFormProps) => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
+  const { showSuccess, showError } = useToast();
   const authClient = createAuthClient();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(false);
     setLoading(true);
 
     try {
       await authClient.requestPasswordReset({ email: email.trim() });
-      setSuccess(true);
+      setEmailSent(true);
+      showSuccess(
+        "If an account exists with that email, we've sent password reset instructions. Please check your inbox and spam folder.",
+        "Email Sent"
+      );
     } catch (err) {
       if (err instanceof ApiError) {
         switch (err.code) {
           case "NETWORK_ERROR":
-            setError("Network error. Please check your connection and try again.");
+            showError("Network error. Please check your connection and try again.", "Connection Error");
             break;
           default:
-            // For security, don't reveal if email exists or not
-            setSuccess(true);
+            // For security, always show success
+            setEmailSent(true);
+            showSuccess(
+              "If an account exists with that email, we've sent password reset instructions.",
+              "Email Sent"
+            );
         }
       } else {
-        setError(err instanceof Error ? err.message : "Failed to send reset email.");
+        showError(err instanceof Error ? err.message : "Failed to send reset email.", "Error");
       }
     } finally {
       setLoading(false);
@@ -133,32 +101,26 @@ export const PasswordResetForm = ({ onBackToLogin }: PasswordResetFormProps) => 
         Enter your email address and we'll send you a link to reset your password.
       </InfoMessage>
 
-      {error && <ErrorMessage>{error}</ErrorMessage>}
-      {success && (
-        <SuccessMessage>
-          If an account exists with that email, we've sent password reset instructions.
-          Please check your inbox and spam folder.
-        </SuccessMessage>
-      )}
+      <Tooltip content="We'll send a secure link to this email address" placement="top">
+        <EmailInput
+          id="email"
+          label="Email Address"
+          placeholder="you@company.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          disabled={loading || emailSent}
+          autoComplete="email"
+          autoFocus
+          showValidation
+        />
+      </Tooltip>
 
-      <TextField
-        id="email"
-        type="email"
-        label="Email Address"
-        placeholder="you@company.com"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        disabled={loading || success}
-        autoComplete="email"
-        autoFocus
-      />
-
-      <Button type="submit" disabled={loading || success} loading={loading} fullWidth size="lg">
-        {loading ? "Sending..." : success ? "Email Sent" : "Send Reset Link"}
+      <Button type="submit" disabled={loading || emailSent} loading={loading} fullWidth size="lg">
+        {loading ? "Sending..." : emailSent ? "Email Sent" : "Send Reset Link"}
       </Button>
 
-      {success && onBackToLogin && (
+      {emailSent && onBackToLogin && (
         <Button
           type="button"
           variant="outline"

@@ -1,5 +1,6 @@
 import { ThemeProvider } from "@repo/ui";
 import { AuthProvider, useAuth } from "./components/AuthContext";
+import { ToastProvider } from "./components/ToastContext";
 import { AuthPage } from "./components/AuthPage";
 import { SuccessPage } from "./components/SuccessPage";
 import { LoadingScreen } from "./components/LoadingScreen";
@@ -19,9 +20,11 @@ const AppContent = () => {
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ToastProvider>
     </ThemeProvider>
   )
 }

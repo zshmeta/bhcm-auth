@@ -1,52 +1,15 @@
 import { useState, type FormEvent } from "react";
 import styled from "styled-components";
-import { Button, TextField } from "@repo/ui";
+import { Button, EmailInput, PasswordInput } from "@repo/ui";
 import { createAuthClient, type LoginRequest, ApiError } from "../../lib/api-client";
 import { useAuth } from "../AuthContext";
+import { useToast } from "../ToastContext";
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.lg};
   width: 100%;
-`;
-
-const ErrorMessage = styled.div`
-  padding: ${({ theme }) => theme.spacing.md};
-  background: rgba(255, 90, 95, 0.08);
-  border: 1px solid rgba(255, 90, 95, 0.25);
-  border-radius: ${({ theme }) => theme.radii.md};
-  color: ${({ theme }) => theme.colors.status.danger};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  line-height: ${({ theme }) => theme.typography.lineHeights.normal};
-  display: flex;
-  align-items: start;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  &::before {
-    content: "⚠";
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-`;
-
-const SuccessMessage = styled.div`
-  padding: ${({ theme }) => theme.spacing.md};
-  background: rgba(50, 215, 75, 0.08);
-  border: 1px solid rgba(50, 215, 75, 0.25);
-  border-radius: ${({ theme }) => theme.radii.md};
-  color: ${({ theme }) => theme.colors.status.success};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  line-height: ${({ theme }) => theme.typography.lineHeights.normal};
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  &::before {
-    content: "✓";
-    font-size: 18px;
-    flex-shrink: 0;
-  }
 `;
 
 const ForgotPasswordLink = styled.button`
@@ -101,16 +64,13 @@ export const LoginForm = ({ onSuccess, onSwitchToSignup, onForgotPassword }: Log
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   const { login } = useAuth();
+  const { showSuccess, showError } = useToast();
   const authClient = createAuthClient();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(false);
     setLoading(true);
 
     try {
@@ -122,7 +82,7 @@ export const LoginForm = ({ onSuccess, onSwitchToSignup, onForgotPassword }: Log
       const result = await authClient.login(loginData);
       login(result.user, result.tokens.accessToken, result.tokens.refreshToken);
 
-      setSuccess(true);
+      showSuccess("Login successful! Redirecting...", "Welcome back");
 
       if (onSuccess) {
         setTimeout(() => {
@@ -133,22 +93,22 @@ export const LoginForm = ({ onSuccess, onSwitchToSignup, onForgotPassword }: Log
       if (err instanceof ApiError) {
         switch (err.code) {
           case "INVALID_CREDENTIALS":
-            setError("Invalid email or password. Please try again.");
+            showError("Invalid email or password. Please try again.", "Login Failed");
             break;
           case "USER_NOT_ACTIVE":
-            setError("Your account is not active. Please verify your email.");
+            showError("Your account is not active. Please verify your email.", "Account Inactive");
             break;
           case "USER_SUSPENDED":
-            setError("Your account has been suspended. Please contact support.");
+            showError("Your account has been suspended. Please contact support.", "Account Suspended");
             break;
           case "NETWORK_ERROR":
-            setError("Network error. Please check your connection and try again.");
+            showError("Network error. Please check your connection and try again.", "Connection Error");
             break;
           default:
-            setError("Login failed. Please try again.");
+            showError("Login failed. Please try again.", "Error");
         }
       } else {
-        setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+        showError(err instanceof Error ? err.message : "Login failed. Please try again.", "Error");
       }
     } finally {
       setLoading(false);
@@ -157,13 +117,9 @@ export const LoginForm = ({ onSuccess, onSwitchToSignup, onForgotPassword }: Log
 
   return (
     <Form onSubmit={handleSubmit}>
-      {error && <ErrorMessage>{error}</ErrorMessage>}
-      {success && <SuccessMessage>Login successful! Redirecting...</SuccessMessage>}
-
       <InputGroup>
-        <TextField
+        <EmailInput
           id="email"
-          type="email"
           label="Email Address"
           placeholder="you@company.com"
           value={email}
@@ -172,11 +128,11 @@ export const LoginForm = ({ onSuccess, onSwitchToSignup, onForgotPassword }: Log
           disabled={loading}
           autoComplete="email"
           autoFocus
+          showValidation
         />
 
-        <TextField
+        <PasswordInput
           id="password"
-          type="password"
           label="Password"
           placeholder="Enter your password"
           value={password}
