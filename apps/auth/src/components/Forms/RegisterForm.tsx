@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from "react";
 import styled from "styled-components";
 import { Button, TextField } from "@repo/ui";
-import { createAuthClient, type RegisterRequest } from "@repo/api-client";
 import { useAuth } from "../AuthContext";
 
 const Form = styled.form`
