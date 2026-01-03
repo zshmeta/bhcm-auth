@@ -14,6 +14,7 @@ export * from "./Icons/Badge";
 export * from "./Icons/IconButton";
 
 // Input Components
+export * from "./Inputs/TextField";
 export * from "./Inputs/EmailInput";
 export * from "./Inputs/PasswordInput";
 export * from "./Inputs/NumInput";
