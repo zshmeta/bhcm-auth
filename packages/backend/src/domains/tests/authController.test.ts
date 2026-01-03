@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { createLoginController } from "../auth/authController.js";
-import type { AuthService } from "../auth/authService.js";
+import { createLoginController } from "../auth/controllers/login.controller.js";
+import type { AuthService } from "../auth/index.js";
 import type { HttpRequest } from "../../api/types.js";
 
 describe("authController", () => {

@@ -9,15 +9,16 @@ import http from "http";
 import { AddressInfo } from "net";
 import "dotenv/config";
 import { loadEnv } from "./config/env.js";
-import { createBcryptHasher } from "./security/hasher.js";
-import { createJwtTokenManager } from "./security/tokens.js";
 import { createPgPool, createDrizzleClient } from "./db/pg.js";
-import { createAuthService } from "./domains/auth/authService.js";
 import {
+  createAuthService,
   createUserRepository,
   createCredentialRepository,
   createSessionRepository,
-} from "./domains/auth/repositories.pg.js";
+  createAuthCodeRepository,
+  createBcryptHasher,
+  createJwtTokenManager,
+} from "./domains/auth/index.js";
 import { OrderService } from "./domains/order/order.service.js";
 import { PositionService } from "./domains/position/position.service.js";
 import { AccountService } from "./domains/account/account.service.js";
@@ -47,6 +48,7 @@ const services = await (async () => {
   const userRepository = createUserRepository(pool);
   const credentialRepository = createCredentialRepository(pool);
   const sessionRepository = createSessionRepository(pool);
+  const authCodeRepository = createAuthCodeRepository(pool);
 
   const passwordHasher = createBcryptHasher(config.bcryptRounds);
   const tokenManager = createJwtTokenManager(config.jwtSecret);
@@ -58,6 +60,7 @@ const services = await (async () => {
     userRepository,
     credentialRepository,
     sessionRepository,
+    authCodeRepository,
     passwordHasher,
     tokenManager,
     config: {

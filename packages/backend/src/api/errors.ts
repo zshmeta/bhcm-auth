@@ -1,5 +1,5 @@
 import type { HttpResponse } from "./types.js";
-import type { AuthError } from "../domains/auth/authService.js";
+import type { AuthError } from "../domains/auth/index.js";
 
 type LoggerLike = {
   error: (msg: string, meta?: Record<string, unknown>) => void;

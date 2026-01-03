@@ -1,10 +1,9 @@
 {
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
     "paths": {
-      "@repo/ui": ["src/ui/src/index.ts"],
-      "@repo/ui/*": ["src/ui/src/*"]
+      "@/*": ["./src/*"],
+      "@repo/ui": ["../../packages/ui/src/index.ts"],
+      "@repo/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "files": [],

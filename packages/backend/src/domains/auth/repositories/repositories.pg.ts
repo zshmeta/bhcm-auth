@@ -19,7 +19,7 @@ import type {
 	UserSession,
 	UserSessionRepository,
 	UUID,
-} from "./auth.types.js";
+} from "../core/auth.types.js";
 
 type Row = Record<string, unknown>;
 
@@ -240,6 +240,10 @@ export function createSessionRepository(pool: Pool): UserSessionRepository {
 			);
 		},
 	};
+}
+
+export function createAuthCodeRepository(pool: Pool): AuthCodeRepository {
+  return new PgAuthCodeRepository(pool);
 }
 
 export class PgAuthCodeRepository implements AuthCodeRepository {

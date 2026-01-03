@@ -1,6 +1,6 @@
 /**
  * Auth API Client.
- * 
+ *
  * Provides methods for authentication operations.
  * All methods return promises that resolve with typed responses.
  */
@@ -26,7 +26,7 @@ import type {
 export const authApi = {
   /**
    * Register a new user.
-   * 
+   *
    * @param input - Registration data
    * @returns Authentication result with user and tokens (if issueSession is true)
    */
@@ -41,7 +41,7 @@ export const authApi = {
 
   /**
    * Login with email and password.
-   * 
+   *
    * @param input - Login credentials
    * @returns Authentication result with user, session, and tokens
    */
@@ -56,7 +56,7 @@ export const authApi = {
 
   /**
    * Generate a short-lived authorization code for cross-domain handoff.
-   * 
+   *
    * @param input - Target URL for the handoff
    * @returns Auth code
    */
@@ -73,7 +73,7 @@ export const authApi = {
 
   /**
    * Refresh access token using refresh token.
-   * 
+   *
    * @param input - Refresh token
    * @returns New authentication result with refreshed tokens
    */
@@ -158,7 +158,7 @@ export const authApi = {
 
   /**
    * Logout (revoke single session).
-   * 
+   *
    * @param input - Session to logout
    */
   async logout(input: LogoutInput): Promise<void> {
@@ -171,7 +171,7 @@ export const authApi = {
 
   /**
    * Logout all sessions for a user.
-   * 
+   *
    * @param input - User ID and optional exclusions
    */
   async logoutAll(input: LogoutAllInput): Promise<void> {
@@ -184,7 +184,7 @@ export const authApi = {
 
   /**
    * Get all active sessions for a user.
-   * 
+   *
    * @param userId - User ID
    * @returns List of active sessions
    */
@@ -196,6 +196,32 @@ export const authApi = {
       return response.data.sessions;
     } catch (err: unknown) {
       throw toUserFacingAuthError(err, "Unable to load sessions");
+    }
+  },
+
+  /**
+   * Change password for authenticated user.
+   *
+   * @param input - Current and new password
+   */
+  async changePassword(input: { currentPassword: string; newPassword: string }): Promise<void> {
+    try {
+      await http.post("/auth/change-password", input, { headers: buildAuthHeaders() });
+    } catch (err: unknown) {
+      if (err instanceof HttpError && typeof err.response === "object" && err.response !== null) {
+        const maybe = err.response as { error?: string; message?: string };
+        switch (maybe.error) {
+          case "INVALID_CURRENT_PASSWORD":
+            throw new Error("Current password is incorrect");
+          case "PASSWORD_TOO_WEAK":
+            throw new Error("New password does not meet security requirements");
+          case "PASSWORD_SAME_AS_CURRENT":
+            throw new Error("New password must be different from current password");
+          default:
+            break;
+        }
+      }
+      throw toUserFacingAuthError(err, "Unable to change password");
     }
   },
 };

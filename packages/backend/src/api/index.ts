@@ -6,13 +6,11 @@
 */
 
 import type { Router } from "./types.js";
-import type { TokenManager } from "../security/tokens.js";
-import type { UserSessionRepository } from "../domains/auth/auth.types.js";
+import type { TokenManager, UserSessionRepository, AuthService } from "../domains/auth/index.js";
 import type { AccountService } from "../domains/account/account.service.js";
 import type { OrderService } from "../domains/order/order.service.js";
 import type { PositionService } from "../domains/position/position.service.js";
-import type { AuthService } from "../domains/auth/authService.js";
-import { registerAuthRoutes } from "../domains/auth/authRoutes.js";
+import { registerAuthRoutes } from "../domains/auth/index.js";
 import { registerPositionRoutes } from "../domains/position/positionRoutes.js";
 import { registerOrderHttpRoutes } from "../domains/order/orderHttpRoutes.js";
 import { registerAdminRoutes } from "../domains/admin/adminRoutes.js";

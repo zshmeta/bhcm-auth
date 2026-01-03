@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createAuthService, AuthError } from "../auth/authService.js";
+import { createAuthService, AuthError } from "../auth/index.js";
 
 // Mock dependencies
 const mockUserRepository = {
@@ -32,12 +32,19 @@ const mockTokenManager = {
 describe("AuthService", () => {
     let authService: any;
 
+    const mockAuthCodeRepository = {
+        save: vi.fn(),
+        findByCode: vi.fn(),
+        markUsed: vi.fn(),
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
         authService = createAuthService({
             userRepository: mockUserRepository as any,
             credentialRepository: mockCredentialRepository as any,
             sessionRepository: mockSessionRepository as any,
+            authCodeRepository: mockAuthCodeRepository as any,
             passwordHasher: mockPasswordHasher,
             tokenManager: mockTokenManager as any,
         });

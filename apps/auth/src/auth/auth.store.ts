@@ -1,6 +1,6 @@
 /**
  * Auth Store (React Context).
- * 
+ *
  * Manages authentication state using React Context API.
  * Provides auth state and methods to components via hooks.
  */
@@ -15,7 +15,7 @@ import {
   type ReactNode,
 } from "react";
 import { authApi } from "./auth.api.js";
-import { tokenStorage } from "../../lib/storage.js";
+import { tokenStorage } from "../lib/storage.js";
 import type { User, Session, LoginInput, RegisterInput } from "./auth.types.js";
 
 /**
@@ -27,13 +27,13 @@ export interface AuthState {
 
   /** Current session (null if not authenticated) */
   session: Session | null;
-  
+
   /** Whether the auth state is being initialized */
   loading: boolean;
-  
+
   /** Authentication error (if any) */
   error: string | null;
-  
+
   /** Whether user is authenticated */
   isAuthenticated: boolean;
 }
@@ -87,19 +87,19 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 export interface AuthActions {
   /** Login with email and password */
   login: (input: LoginInput) => Promise<void>;
-  
+
   /** Register new user */
   register: (input: RegisterInput) => Promise<void>;
-  
+
   /** Logout current session */
   logout: () => Promise<void>;
-  
+
   /** Logout all sessions */
   logoutAll: () => Promise<void>;
-  
+
   /** Refresh access token */
   refreshToken: () => Promise<void>;
-  
+
   /** Clear error state */
   clearError: () => void;
 }
@@ -193,7 +193,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     try {
       const result = await authApi.login(input);
-      
+
       // Store tokens
       tokenStorage.setAccessToken(result.tokens.accessToken);
       tokenStorage.setRefreshToken(result.tokens.refreshToken);
@@ -215,7 +215,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     try {
       const result = await authApi.register(input);
-      
+
       // Check if session was issued
       if ("tokens" in result) {
         // Store tokens
@@ -277,7 +277,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   /**
    * Clear error state.
    */
-  
+
   const clearError = useCallback(() => {
     dispatch({ type: "CLEAR_ERROR" });
   }, []);
@@ -297,7 +297,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 /**
  * Use auth context hook.
- * 
+ *
  * @returns Auth context value
  * @throws Error if used outside AuthProvider
  */

@@ -1,10 +1,10 @@
 import { createPgPool, createDrizzleClient } from "../src/db/pg.js";
 import { loadEnv } from "../src/config/env.js";
-import { createBcryptHasher } from "../src/security/hasher.js";
 import {
+    createBcryptHasher,
     createUserRepository,
     createCredentialRepository
-} from "../src/domains/user/repositories.pg.js";
+} from "../src/domains/auth/index.js";
 import { AccountService } from "../src/domains/account/AccountService.js";
 import { users } from "@repo/database";
 import { eq } from "drizzle-orm";

@@ -1,6 +1,6 @@
 /**
  * Logout Controller.
- * 
+ *
  * HTTP adapter for logout use case.
  * Handles single session termination.
  */
@@ -13,7 +13,7 @@ import { AuthError } from "../core/auth.errors.js";
 
 /**
  * Create logout controller.
- * 
+ *
  * @param authService - Auth service instance
  * @returns HTTP request handler
  */

@@ -1,8 +1,9 @@
-import { forwardRef, type InputHTMLAttributes } from "react";
+import { forwardRef, type InputHTMLAttributes, type ReactNode } from "react";
 import styled from "styled-components";
 
 export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
-	label?: string;
+	/** Label can be a string or ReactNode for rich content */
+	label?: ReactNode;
 	error?: string;
 	helpText?: string;
 }

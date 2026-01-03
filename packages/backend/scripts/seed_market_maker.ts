@@ -1,10 +1,10 @@
 import { createPgPool, createDrizzleClient } from "../src/db/pg.js";
 import { loadEnv } from "../src/config/env.js";
-import { createBcryptHasher } from "../src/security/hasher.js";
 import {
+    createBcryptHasher,
     createUserRepository,
     createCredentialRepository
-} from "../src/domains/user/repositories.pg.js";
+} from "../src/domains/auth/index.js";
 import { AccountService } from "../src/domains/account/AccountService.js";
 import { users } from "@repo/database";
 import { eq } from "drizzle-orm";
@@ -66,7 +66,7 @@ async function main() {
         // Actually AccountService.updateBalance is what we want.
         // Wait, updateBalance only handles the 'balance' column (quote currency usually?).
         // We also need BTC (Asset) balance if we want to Sell.
-        // Our AccountService currently creates ONE account per user? 
+        // Our AccountService currently creates ONE account per user?
         // Let's check AccountService.ts again. Usually exchanges have one account per currency OR a multi-currency account.
         // Schema says `accounts` table has `currency`.
         // So a user has MULTIPLE accounts.

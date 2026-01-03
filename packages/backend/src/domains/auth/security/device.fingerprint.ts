@@ -1,6 +1,6 @@
 /**
  * Device Fingerprinting.
- * 
+ *
  * Creates stable identifiers for devices based on browser/client characteristics.
  * Used for anomaly detection and trusted device management.
  */
@@ -15,13 +15,13 @@ import type { DeviceMetadata } from "../core/auth.types.js";
 export interface DeviceInfo extends DeviceMetadata {
   /** Screen resolution (if available) */
   screenResolution?: string;
-  
+
   /** Timezone offset in minutes */
   timezoneOffset?: number;
-  
+
   /** Browser language */
   language?: string;
-  
+
   /** Operating system platform */
   platform?: string;
 }
@@ -32,7 +32,7 @@ export interface DeviceInfo extends DeviceMetadata {
 export interface DeviceFingerprint {
   /** Stable fingerprint hash */
   fingerprint: string;
-  
+
   /** Components used to create fingerprint */
   components: {
     userAgent?: string;
@@ -42,7 +42,7 @@ export interface DeviceFingerprint {
     language?: string;
     platform?: string;
   };
-  
+
   /** Fingerprint confidence score (0-100) */
   confidence: number;
 }
@@ -56,7 +56,7 @@ export class DeviceFingerprinter {
 
   /**
    * Generate device fingerprint from device information.
-   * 
+   *
    * @param info - Device information
    * @returns Device fingerprint with confidence score
    */
@@ -125,7 +125,7 @@ export class DeviceFingerprinter {
 
   /**
    * Compare two device fingerprints.
-   * 
+   *
    * @param fp1 - First fingerprint
    * @param fp2 - Second fingerprint
    * @returns Similarity score (0-100), 100 = identical
@@ -161,7 +161,7 @@ export class DeviceFingerprinter {
 
   /**
    * Check if a device fingerprint has changed significantly.
-   * 
+   *
    * @param previous - Previous fingerprint
    * @param current - Current fingerprint
    * @returns True if device has changed significantly
@@ -172,7 +172,7 @@ export class DeviceFingerprinter {
     }
 
     const similarity = this.compare(previous, current);
-    
+
     // Consider changed if similarity is below 70%
     return similarity < 70;
   }
@@ -187,16 +187,16 @@ export class DeviceFingerprinter {
 
 /**
  * Extract device information from HTTP request headers.
- * 
+ *
  * @param headers - HTTP request headers
  * @returns Device information
  */
 export function extractDeviceInfo(headers: Record<string, string | undefined>): DeviceInfo {
   return {
     userAgent: headers["user-agent"],
-    ipAddress: headers["x-forwarded-for"]?.split(",")[0].trim() || headers["x-real-ip"],
+    ipAddress: headers["x-forwarded-for"]?.split(",")[0]?.trim() || headers["x-real-ip"],
     platform: headers["sec-ch-ua-platform"]?.replace(/"/g, ""),
-    language: headers["accept-language"]?.split(",")[0].trim(),
+    language: headers["accept-language"]?.split(",")[0]?.trim(),
   };
 }
 

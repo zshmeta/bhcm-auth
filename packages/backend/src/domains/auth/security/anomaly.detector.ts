@@ -1,6 +1,6 @@
 /**
  * Anomaly Detection Service.
- * 
+ *
  * Detects suspicious authentication patterns and potential security threats.
  * Includes token reuse detection, impossible travel, and concurrent sessions.
  */
@@ -25,22 +25,22 @@ export type AnomalyType =
 export interface Anomaly {
   /** Type of anomaly */
   type: AnomalyType;
-  
+
   /** Severity level */
   severity: "low" | "medium" | "high" | "critical";
-  
+
   /** Description of the anomaly */
   description: string;
-  
+
   /** User ID affected */
   userId?: UUID;
-  
+
   /** Session ID affected */
   sessionId?: UUID;
-  
+
   /** Additional metadata */
   metadata?: Record<string, unknown>;
-  
+
   /** Timestamp when anomaly was detected */
   detectedAt: string;
 }
@@ -51,10 +51,10 @@ export interface Anomaly {
 export interface Location {
   /** Latitude */
   lat: number;
-  
+
   /** Longitude */
   lon: number;
-  
+
   /** Timestamp of this location */
   timestamp: number;
 }
@@ -66,7 +66,7 @@ export interface Location {
 export class AnomalyDetector {
   // Track token usage to detect reuse
   private readonly tokenUsage = new Map<string, number>();
-  
+
   // Track user locations for impossible travel detection
   private readonly userLocations = new Map<UUID, Location[]>();
 
@@ -75,7 +75,7 @@ export class AnomalyDetector {
   /**
    * Check for token reuse anomaly.
    * Tokens should only be used once for refresh operations.
-   * 
+   *
    * @param tokenHash - Hash of the token
    * @returns Anomaly if detected, null otherwise
    */
@@ -109,7 +109,7 @@ export class AnomalyDetector {
   /**
    * Check for impossible travel anomaly.
    * Detects logins from locations that are impossibly far apart in time.
-   * 
+   *
    * @param userId - User ID
    * @param currentLocation - Current login location
    * @returns Anomaly if detected, null otherwise
@@ -120,7 +120,7 @@ export class AnomalyDetector {
     }
 
     const locations = this.userLocations.get(userId) || [];
-    
+
     // Add current location to history
     locations.push(currentLocation);
     this.userLocations.set(userId, locations.slice(-10)); // Keep last 10 locations
@@ -130,8 +130,8 @@ export class AnomalyDetector {
       return null;
     }
 
-    const previousLocation = locations[locations.length - 2];
-    
+    const previousLocation = locations[locations.length - 2]!;
+
     // Calculate distance in kilometers
     const distance = this.calculateDistance(
       previousLocation.lat,
@@ -176,7 +176,7 @@ export class AnomalyDetector {
 
   /**
    * Calculate distance between two coordinates using Haversine formula.
-   * 
+   *
    * @param lat1 - Latitude of first point
    * @param lon1 - Longitude of first point
    * @param lat2 - Latitude of second point
@@ -187,14 +187,14 @@ export class AnomalyDetector {
     const R = 6371; // Earth's radius in km
     const dLat = this.toRad(lat2 - lat1);
     const dLon = this.toRad(lon2 - lon1);
-    
+
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(this.toRad(lat1)) *
         Math.cos(this.toRad(lat2)) *
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
-    
+
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
@@ -208,7 +208,7 @@ export class AnomalyDetector {
 
   /**
    * Handle detected anomaly according to policy.
-   * 
+   *
    * @param anomaly - Detected anomaly
    * @returns Action to take
    */
@@ -252,7 +252,7 @@ export class AnomalyDetector {
     // Clear token usage older than 1 hour
     // In production, this should be based on token TTL
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
-    
+
     // Clear old locations
     for (const [userId, locations] of this.userLocations.entries()) {
       const recentLocations = locations.filter(

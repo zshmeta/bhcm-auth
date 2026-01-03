@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import styled, { keyframes } from "styled-components";
-// import VideoSrc from "@repo/assets/Page404.mp4"; // Renamed to avoid collision with component
-import VideoSrc from ".../assets/Page404.mp4"; // Renamed to avoid collision with component
+import Page404 from "@repo/ui"; // Renamed to avoid collision with component
+// import VideoSrc from "../../assets/Page404.mp4"; // Renamed to avoid collision with component
 
 
 export type Page404Props = {
@@ -18,7 +18,7 @@ const Root = styled.main`
   min-height: 100vh;
   width: 100%;
   overflow: hidden;
-  background: black; 
+  background: black;
 `;
 
 // 2. The Video Layer: Sits at the very back
@@ -42,7 +42,7 @@ const KnockoutContainer = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  isolation: isolate; 
+  isolation: isolate;
   background: ${({ theme }) => theme.colors.backgrounds.app}; // The "Solid" color covering the screen
 `;
 
@@ -124,14 +124,14 @@ export function Page404({
     // Determine distinct delay start times so the wave flows from top line to bottom line
     const headlineNodes = useWaveNodes(headline, 0);
     const messageNodes = useWaveNodes(message, headline.replace(/\s/g, "").length);
-    
+
     return (
     <Root {...rest}>
       {/* Layer 1: The Video */}
       <VideoFrame autoPlay muted loop playsInline poster={posterSrc}>
         <source src={videoSrc} type="video/mp4" />
       </VideoFrame>
-        
+
       {/* Layer 2: The Solid Background with "Holes" for text */}
       <KnockoutContainer>
           <CutoutText>

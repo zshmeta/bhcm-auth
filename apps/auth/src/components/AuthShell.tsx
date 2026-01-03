@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import styled from "styled-components";
 import { Card, Text } from "@repo/ui";
-import { Header } from "@/Header";
+import { Header } from "@repo/ui";
 
 
 const Viewport = styled.div`

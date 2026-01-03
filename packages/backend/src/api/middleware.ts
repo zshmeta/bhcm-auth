@@ -1,6 +1,5 @@
 import type { HttpRequest } from "./types.js";
-import type { TokenManager } from "../security/tokens.js";
-import type { UserSessionRepository } from "../domains/auth/auth.types.js";
+import type { TokenManager, UserSessionRepository } from "../domains/auth/index.js";
 
 export type AuthenticatedClaims = {
   sub: string;
