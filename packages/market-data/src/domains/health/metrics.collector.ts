@@ -4,8 +4,17 @@
  *
  * Collects and aggregates metrics from all components.
  *
- * NOTE: This is a simple in-memory metrics implementation.
- * For production, you'd integrate with Prometheus, DataDog, etc.
+ * FEATURES:
+ * - In-memory counters and gauges
+ * - Prometheus text format export for scraping
+ * - Simple API for incrementing and setting values
+ *
+ * USAGE:
+ * ```typescript
+ * metrics.increment('ticks.received');
+ * metrics.gauge('ws.connections', 42);
+ * const prometheusText = metrics.toPrometheusText();
+ * ```
  */
 
 import { logger } from '../../utils/logger.js';
@@ -14,7 +23,23 @@ import type { Metrics } from './health.types.js';
 const log = logger.child({ component: 'metrics' });
 
 /**
- * Simple metrics collector.
+ * Metric descriptions for Prometheus HELP text.
+ */
+const METRIC_DESCRIPTIONS: Record<string, string> = {
+  'ticks.received': 'Total number of ticks received from data sources',
+  'ticks.published': 'Total number of ticks published to WebSocket clients',
+  'candles.closed': 'Total number of candles completed and persisted',
+  'ws.messages.received': 'Total WebSocket messages received from clients',
+  'ws.messages.sent': 'Total WebSocket messages sent to clients',
+  'errors': 'Total number of errors encountered',
+  'ws.connections': 'Current number of active WebSocket connections',
+  'ws.subscriptions': 'Current number of active symbol subscriptions',
+  'cache.hitrate': 'Cache hit rate percentage',
+  'tick.latency': 'Average tick processing latency in milliseconds',
+};
+
+/**
+ * Simple metrics collector with Prometheus export support.
  */
 class MetricsCollector {
   private counters = new Map<string, number>();
@@ -68,6 +93,53 @@ class MetricsCollector {
       cacheHitRate: this.getGauge('cache.hitrate'),
       tickLatencyMs: this.getGauge('tick.latency'),
     };
+  }
+
+  /**
+   * Export metrics in Prometheus text format.
+   *
+   * This format is compatible with Prometheus scraping.
+   * Each metric includes TYPE and HELP annotations.
+   *
+   * @returns Prometheus exposition format text
+   */
+  toPrometheusText(): string {
+    const lines: string[] = [];
+    const prefix = 'market_data';
+
+    // Export counters
+    for (const [name, value] of this.counters) {
+      const metricName = `${prefix}_${name.replace(/\./g, '_')}_total`;
+      const description = METRIC_DESCRIPTIONS[name] || name;
+
+      lines.push(`# HELP ${metricName} ${description}`);
+      lines.push(`# TYPE ${metricName} counter`);
+      lines.push(`${metricName} ${value}`);
+      lines.push('');
+    }
+
+    // Export gauges
+    for (const [name, value] of this.gauges) {
+      const metricName = `${prefix}_${name.replace(/\./g, '_')}`;
+      const description = METRIC_DESCRIPTIONS[name] || name;
+
+      lines.push(`# HELP ${metricName} ${description}`);
+      lines.push(`# TYPE ${metricName} gauge`);
+      lines.push(`${metricName} ${value}`);
+      lines.push('');
+    }
+
+    // Add process metrics
+    lines.push(`# HELP ${prefix}_process_uptime_seconds Process uptime in seconds`);
+    lines.push(`# TYPE ${prefix}_process_uptime_seconds gauge`);
+    lines.push(`${prefix}_process_uptime_seconds ${Math.floor(process.uptime())}`);
+    lines.push('');
+
+    lines.push(`# HELP ${prefix}_process_memory_heap_bytes Process heap memory in bytes`);
+    lines.push(`# TYPE ${prefix}_process_memory_heap_bytes gauge`);
+    lines.push(`${prefix}_process_memory_heap_bytes ${process.memoryUsage().heapUsed}`);
+
+    return lines.join('\n');
   }
 
   /**

@@ -4,12 +4,15 @@
  *
  * Tests for the Binance WebSocket collector.
  *
+ * NOTE: These tests connect to the real Binance WebSocket.
+ * They are excluded from the default test run and should be
+ * run manually or in integration test mode.
+ *
  * TO RUN:
- * - Start the service: npm run dev
- * - Or run isolated: npx vitest run tests/collectors/binance.collector.test.ts
+ * - npx vitest run tests/binance.collector.test.ts
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { BinanceCollector } from '../src/domains/collectors/binance.collector.js';
 
 describe('BinanceCollector', () => {
@@ -25,7 +28,7 @@ describe('BinanceCollector', () => {
 
   describe('initialization', () => {
     it('should have correct name', () => {
-      expect(collector.getName()).toBe('binance');
+      expect(collector.name).toBe('binance');
     });
 
     it('should start in disconnected state', () => {
@@ -33,21 +36,21 @@ describe('BinanceCollector', () => {
       expect(health.state).toBe('disconnected');
     });
 
-    it('should have supported symbols', () => {
-      const symbols = collector.getSupportedSymbols();
-      expect(symbols.length).toBeGreaterThan(0);
-      expect(symbols).toContain('BTC/USD');
-      expect(symbols).toContain('ETH/USD');
+    it('should support crypto asset kind', () => {
+      expect(collector.supportedKinds).toContain('crypto');
     });
   });
 
   describe('tick emission', () => {
     it('should emit ticks when connected', async () => {
-      const ticks: any[] = [];
+      const ticks: unknown[] = [];
       collector.onTick((tick) => ticks.push(tick));
 
       // Start collector (this will connect to Binance)
       await collector.start();
+
+      // Subscribe to symbols
+      await collector.subscribe(['BTC/USD', 'ETH/USD']);
 
       // Wait for some ticks (Binance sends data quickly)
       await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -56,19 +59,20 @@ describe('BinanceCollector', () => {
       expect(ticks.length).toBeGreaterThan(0);
 
       // Verify tick structure
-      const tick = ticks[0];
+      const tick = ticks[0] as Record<string, unknown>;
       expect(tick).toHaveProperty('symbol');
       expect(tick).toHaveProperty('last');
-      expect(tick).toHaveProperty('bid');
-      expect(tick).toHaveProperty('ask');
       expect(tick).toHaveProperty('timestamp');
+      expect(tick).toHaveProperty('source');
+      expect(tick.source).toBe('binance');
     }, 10000); // 10 second timeout
 
     it('should normalize symbol names', async () => {
-      const ticks: any[] = [];
-      collector.onTick((tick) => ticks.push(tick));
+      const ticks: Array<{ symbol: string }> = [];
+      collector.onTick((tick) => ticks.push(tick as { symbol: string }));
 
       await collector.start();
+      await collector.subscribe(['BTC/USD', 'ETH/USD']);
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
       // Symbols should be in our internal format (BTC/USD not BTCUSDT)
@@ -79,7 +83,7 @@ describe('BinanceCollector', () => {
     }, 10000);
   });
 
-  describe('reconnection', () => {
+  describe('state management', () => {
     it('should track connection state', async () => {
       expect(collector.getHealth().state).toBe('disconnected');
 
@@ -90,7 +94,39 @@ describe('BinanceCollector', () => {
       expect(collector.getHealth().state).toBe('connected');
 
       await collector.stop();
-      expect(collector.getHealth().state).toBe('disconnected');
+      expect(collector.getHealth().state).toBe('stopped');
+    }, 10000);
+
+    it('should emit state change events', async () => {
+      const stateChanges: Array<{ from: string; to: string }> = [];
+      collector.onStateChange((state, prevState) => {
+        stateChanges.push({ from: prevState, to: state });
+      });
+
+      await collector.start();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      await collector.stop();
+
+      expect(stateChanges.length).toBeGreaterThan(0);
+      expect(stateChanges.some((c) => c.to === 'connected')).toBe(true);
+      expect(stateChanges.some((c) => c.to === 'stopped')).toBe(true);
+    }, 10000);
+  });
+
+  describe('health reporting', () => {
+    it('should report health metrics', async () => {
+      await collector.start();
+      await collector.subscribe(['BTC/USD']);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      const health = collector.getHealth();
+
+      expect(health.name).toBe('binance');
+      expect(health.state).toBe('connected');
+      expect(health.subscribedSymbols).toBe(1);
+      expect(health.ticksPerMinute).toBeGreaterThanOrEqual(0);
+      expect(health.circuitBreakerOpen).toBe(false);
     }, 10000);
   });
 });

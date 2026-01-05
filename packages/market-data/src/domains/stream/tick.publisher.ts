@@ -45,11 +45,14 @@ export class TickPublisher {
   private publishedCount = 0;
   private throttledCount = 0;
 
+  /** Timer reference for cleanup */
+  private metricsTimer: NodeJS.Timeout;
+
   constructor(connectionManager: ConnectionManager) {
     this.connectionManager = connectionManager;
 
     // Log metrics every minute
-    setInterval(() => {
+    this.metricsTimer = setInterval(() => {
       if (this.publishedCount > 0 || this.throttledCount > 0) {
         log.debug({
           published: this.publishedCount,
@@ -60,6 +63,15 @@ export class TickPublisher {
       this.publishedCount = 0;
       this.throttledCount = 0;
     }, 60000);
+  }
+
+  /**
+   * Dispose of service resources.
+   * Call this when shutting down to prevent memory leaks.
+   */
+  dispose(): void {
+    clearInterval(this.metricsTimer);
+    this.lastUpdateTime.clear();
   }
 
   /**

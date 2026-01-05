@@ -26,7 +26,7 @@ import { SubscriptionManager } from './subscription.manager.js';
 import { TickPublisher } from './tick.publisher.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../utils/logger.js';
-import type { ClientMessage, ServerMessage, PongMessage } from './stream.types.js';
+import { clientMessageSchema, type ServerMessage, type PongMessage } from './stream.types.js';
 
 const log = logger.child({ component: 'websocket-server' });
 
@@ -175,7 +175,15 @@ export class MarketDataWebSocketServer {
   private handleMessage(clientId: string, data: unknown): void {
     try {
       const messageStr = data instanceof Buffer ? data.toString() : String(data);
-      const message = JSON.parse(messageStr) as ClientMessage;
+      const parsed = clientMessageSchema.safeParse(JSON.parse(messageStr));
+
+      if (!parsed.success) {
+        log.debug({ clientId, error: parsed.error.message }, 'Invalid client message');
+        this.sendError(clientId, 'INVALID_MESSAGE', 'Invalid message format');
+        return;
+      }
+
+      const message = parsed.data;
 
       switch (message.type) {
         case 'subscribe':
@@ -189,9 +197,6 @@ export class MarketDataWebSocketServer {
         case 'ping':
           this.handlePing(clientId);
           break;
-
-        default:
-          this.sendError(clientId, 'UNKNOWN_MESSAGE_TYPE', 'Unknown message type');
       }
     } catch (error) {
       log.debug({ error, clientId }, 'Failed to parse client message');

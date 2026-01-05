@@ -6,7 +6,11 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
 
     // Exclude integration tests by default (require running service)
-    exclude: ['tests/api/**/*.test.ts', 'tests/collectors/binance.collector.test.ts'],
+    exclude: [
+      'tests/routes.test.ts',           // Requires running HTTP server
+      'tests/binance.collector.test.ts', // Requires network connection to Binance
+      'tests/api/**/*.test.ts',          // API integration tests
+    ],
 
     // Environment
     environment: 'node',

@@ -39,11 +39,14 @@ export class SubscriptionManager {
   private connectionManager: ConnectionManager;
   private rateLimits = new Map<string, RateLimitEntry>();
 
+  /** Timer reference for cleanup */
+  private cleanupTimer: NodeJS.Timeout;
+
   constructor(connectionManager: ConnectionManager) {
     this.connectionManager = connectionManager;
 
     // Clean up rate limit entries periodically
-    setInterval(() => {
+    this.cleanupTimer = setInterval(() => {
       const now = Date.now();
       for (const [clientId, entry] of this.rateLimits) {
         if (now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
@@ -51,6 +54,15 @@ export class SubscriptionManager {
         }
       }
     }, RATE_LIMIT_WINDOW_MS);
+  }
+
+  /**
+   * Dispose of service resources.
+   * Call this when shutting down to prevent memory leaks.
+   */
+  dispose(): void {
+    clearInterval(this.cleanupTimer);
+    this.rateLimits.clear();
   }
 
   /**

@@ -34,7 +34,9 @@ import { logger } from '../utils/logger.js';
 import { PriceCache } from '../domains/cache/price.cache.js';
 import { HistoricalService } from '../domains/historical/historical.service.js';
 import { HealthService } from '../domains/health/health.service.js';
-import type { Timeframe } from '../domains/normalizer/data.validators.js';
+import { TIMEFRAME_MS, type Timeframe } from '../domains/normalizer/data.validators.js';
+import { candleQuerySchema, parseQueryParams, formatZodErrors } from './validators.js';
+import { metrics } from '../domains/health/metrics.collector.js';
 
 const log = logger.child({ component: 'api' });
 
@@ -99,6 +101,16 @@ export function createApiServer(deps: ApiDependencies): http.Server {
       }
 
       // =====================================
+      // METRICS ENDPOINT (for Prometheus)
+      // =====================================
+      if (pathname === '/metrics' && req.method === 'GET') {
+        res.setHeader('Content-Type', 'text/plain; version=0.0.4');
+        res.writeHead(200);
+        res.end(metrics.toPrometheusText());
+        return;
+      }
+
+      // =====================================
       // PRICE ENDPOINTS
       // =====================================
       if (pathname === '/api/prices' && req.method === 'GET') {
@@ -131,14 +143,20 @@ export function createApiServer(deps: ApiDependencies): http.Server {
       if (candleMatch && candleMatch[1] && req.method === 'GET') {
         const symbol = decodeURIComponent(candleMatch[1]);
 
-        // Parse query parameters
-        const timeframe = (url.searchParams.get('timeframe') || '1m') as Timeframe;
-        const limit = parseInt(url.searchParams.get('limit') || '100', 10);
+        // Validate query parameters
+        const queryResult = parseQueryParams(candleQuerySchema, url.searchParams);
 
-        // Time range defaults to last N candles
-        const to = parseInt(url.searchParams.get('to') || '', 10) || Date.now();
-        const from = parseInt(url.searchParams.get('from') || '', 10) ||
-          (to - limit * getTimeframeMs(timeframe));
+        if (!queryResult.success) {
+          res.writeHead(400);
+          res.end(JSON.stringify(formatZodErrors(queryResult.error)));
+          return;
+        }
+
+        const { timeframe, limit, to: toParam, from: fromParam } = queryResult.data;
+
+        // Time range defaults to last N candles if not specified
+        const to = toParam ?? Date.now();
+        const from = fromParam ?? (to - limit * TIMEFRAME_MS[timeframe]);
 
         const candles = await historicalService.getCandles({
           symbol,
@@ -196,20 +214,4 @@ export function createApiServer(deps: ApiDependencies): http.Server {
   });
 
   return server;
-}
-
-/**
- * Get timeframe duration in milliseconds.
- */
-function getTimeframeMs(timeframe: Timeframe): number {
-  const map: Record<Timeframe, number> = {
-    '1m': 60 * 1000,
-    '5m': 5 * 60 * 1000,
-    '15m': 15 * 60 * 1000,
-    '1h': 60 * 60 * 1000,
-    '4h': 4 * 60 * 60 * 1000,
-    '1d': 24 * 60 * 60 * 1000,
-    '1w': 7 * 24 * 60 * 60 * 1000,
-  };
-  return map[timeframe] ?? map['1m'];
 }

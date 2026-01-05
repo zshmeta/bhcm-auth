@@ -213,9 +213,16 @@ export class CollectorRegistry {
    * Register a collector and set up event handlers.
    */
   private registerCollector(collector: ICollector): void {
-    // Set up tick handler with validation
+    // Set up tick handler with validation and error handling
     collector.onTick((tick) => {
-      this.handleTick(tick);
+      try {
+        this.handleTick(tick);
+      } catch (error) {
+        this.log.error(
+          { error, symbol: tick.symbol, source: tick.source },
+          'Failed to handle tick in registry'
+        );
+      }
     });
 
     // Set up error handler

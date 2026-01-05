@@ -147,6 +147,7 @@ class InMemoryCache implements IRedisLike {
  * Automatically falls back to in-memory cache if Redis is unavailable.
  */
 let redisClient: IRedisLike | null = null;
+let subscriberClient: IRedisLike | null = null;
 let isConnected = false;
 let usingFallback = false;
 
@@ -213,6 +214,53 @@ export async function getRedisClient(): Promise<IRedisLike> {
 }
 
 /**
+ * Get or create a separate Redis client for subscriptions.
+ *
+ * IMPORTANT: In Redis, once a client enters subscriber mode (after calling
+ * subscribe()), it cannot be used for regular commands like GET/SET.
+ * This function returns a dedicated client for pub/sub subscriptions.
+ *
+ * If using the in-memory fallback, this returns the same client since
+ * our InMemoryCache implementation handles this correctly.
+ */
+export async function getSubscriberClient(): Promise<IRedisLike> {
+  // If using fallback or subscriber already exists, return it
+  if (usingFallback) {
+    return getRedisClient();
+  }
+
+  if (subscriberClient) {
+    return subscriberClient;
+  }
+
+  // Create a separate Redis client for subscriptions
+  if (!env.REDIS_URL) {
+    return getRedisClient();
+  }
+
+  try {
+    const redis = new Redis(env.REDIS_URL, {
+      maxRetriesPerRequest: 3,
+      lazyConnect: true,
+    });
+
+    redis.on('error', (err: Error) => {
+      log.error({ error: err.message }, 'Redis subscriber error');
+    });
+
+    await redis.connect();
+
+    subscriberClient = redis as unknown as IRedisLike;
+    log.info('Redis subscriber client initialized');
+
+    return subscriberClient;
+  } catch (error) {
+    log.warn({ error }, 'Failed to create subscriber client, using main client');
+    return getRedisClient();
+  }
+}
+
+/**
  * Check if Redis is connected.
  */
 export function isRedisConnected(): boolean {
@@ -227,9 +275,18 @@ export function isUsingFallback(): boolean {
 }
 
 /**
- * Close Redis connection.
+ * Close Redis connections.
  */
 export async function closeRedis(): Promise<void> {
+  if (subscriberClient && subscriberClient !== redisClient) {
+    try {
+      await subscriberClient.quit();
+    } catch (error) {
+      log.debug({ error }, 'Error closing subscriber client');
+    }
+    subscriberClient = null;
+  }
+
   if (redisClient) {
     await redisClient.quit();
     redisClient = null;

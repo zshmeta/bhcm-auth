@@ -101,7 +101,8 @@ describe('PriceCache', () => {
       const stats = cache.getStats();
       expect(stats.hits).toBe(2);
       expect(stats.misses).toBe(1);
-      expect(stats.hitRate).toBeCloseTo(0.667, 2);
+      // hitRate is expressed as percentage (0-100), not ratio (0-1)
+      expect(stats.hitRate).toBeCloseTo(66.67, 1);
     });
   });
 });

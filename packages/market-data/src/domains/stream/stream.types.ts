@@ -5,6 +5,29 @@
  * Types for the WebSocket streaming layer.
  */
 
+import { z } from 'zod';
+
+/**
+ * Zod schema for validating incoming client messages.
+ * Provides runtime type safety for WebSocket messages.
+ */
+export const clientMessageSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('subscribe'),
+    symbols: z.array(z.string().min(1)).min(1).max(100),
+    timestamp: z.number().optional(),
+  }),
+  z.object({
+    type: z.literal('unsubscribe'),
+    symbols: z.array(z.string().min(1)).min(1),
+    timestamp: z.number().optional(),
+  }),
+  z.object({
+    type: z.literal('ping'),
+    timestamp: z.number().optional(),
+  }),
+]);
+
 /**
  * Client subscription state.
  */

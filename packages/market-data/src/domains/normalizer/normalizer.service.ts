@@ -47,9 +47,12 @@ export class NormalizerService {
   private processedCount = 0;
   private duplicateCount = 0;
 
+  /** Timer reference for cleanup */
+  private metricsTimer: NodeJS.Timeout;
+
   constructor() {
     // Log metrics every minute
-    setInterval(() => {
+    this.metricsTimer = setInterval(() => {
       if (this.processedCount > 0) {
         this.log.debug({
           processed: this.processedCount,
@@ -59,6 +62,16 @@ export class NormalizerService {
       this.processedCount = 0;
       this.duplicateCount = 0;
     }, 60000);
+  }
+
+  /**
+   * Dispose of service resources.
+   * Call this when shutting down to prevent memory leaks.
+   */
+  dispose(): void {
+    clearInterval(this.metricsTimer);
+    this.emitter.removeAllListeners();
+    this.lastTicks.clear();
   }
 
   /**

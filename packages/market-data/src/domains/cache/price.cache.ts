@@ -16,7 +16,7 @@
  * mislead users. The TTL ensures we never serve truly stale data.
  */
 
-import { getRedisClient, isRedisConnected, isUsingFallback } from './redis.client.js';
+import { getRedisClient, getSubscriberClient, isRedisConnected, isUsingFallback } from './redis.client.js';
 import { ALL_SYMBOLS } from '../../config/symbols.js';
 import { logger } from '../../utils/logger.js';
 import type { EnrichedTick } from '../normalizer/normalizer.types.js';
@@ -41,12 +41,23 @@ export class PriceCache {
   private hits = 0;
   private misses = 0;
 
+  /** Timer reference for cleanup */
+  private statsResetTimer: NodeJS.Timeout;
+
   constructor() {
     // Reset counters every minute
-    setInterval(() => {
+    this.statsResetTimer = setInterval(() => {
       this.hits = 0;
       this.misses = 0;
     }, 60000);
+  }
+
+  /**
+   * Dispose of service resources.
+   * Call this when shutting down to prevent memory leaks.
+   */
+  dispose(): void {
+    clearInterval(this.statsResetTimer);
   }
 
   /**
@@ -188,13 +199,17 @@ export class PriceCache {
    * Subscribe to price updates via Redis pub/sub.
    * Use this to receive updates from other services.
    *
+   * IMPORTANT: This uses a separate Redis client for subscriptions
+   * because Redis clients in subscriber mode cannot execute other commands.
+   *
    * @param callback - Called when a price update is published
    */
   async subscribe(callback: (price: CachedPrice) => void): Promise<void> {
-    const redis = await getRedisClient();
-    await redis.subscribe(PRICE_CHANNEL);
+    // Use dedicated subscriber client to avoid blocking the main client
+    const subscriber = await getSubscriberClient();
+    await subscriber.subscribe(PRICE_CHANNEL);
 
-    redis.on('message', (channel: string, message: string) => {
+    subscriber.on('message', (channel: string, message: string) => {
       if (channel === PRICE_CHANNEL) {
         try {
           const price = JSON.parse(message) as CachedPrice;
