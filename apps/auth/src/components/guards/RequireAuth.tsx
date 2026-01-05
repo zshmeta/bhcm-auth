@@ -9,6 +9,7 @@ import { type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Loader } from "@repo/ui";
 import { useAuth } from "../../auth/auth.hooks.js";
+import styled from "styled-components";
 
 interface RequireAuthProps {
 	/** Content to render when authenticated */
@@ -36,6 +37,18 @@ interface RequireAuthProps {
  * />
  * ```
  */
+
+
+
+const LoadingWrapper = styled.div`
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: ${({ theme }) => theme.colors.backgrounds.app};
+`;
+
+
 export function RequireAuth({
 	children,
 	allowedRoles,
@@ -78,31 +91,11 @@ export function RequireAuth({
 /**
  * Higher-order component version for class components or complex scenarios.
  */
-export function withAuth<P extends object>(
-	WrappedComponent: React.ComponentType<P>,
-	options?: Omit<RequireAuthProps, "children">
-) {
-	return function AuthenticatedComponent(props: P) {
-		return (
-			<RequireAuth {...options}>
-				<WrappedComponent {...props} />
-			</RequireAuth>
-		);
-	};
-}
+
 
 // ---------------------------------------------------------------------------
 // Styled Components
 // ---------------------------------------------------------------------------
 
-import styled from "styled-components";
-
-const LoadingWrapper = styled.div`
-	min-height: 100vh;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: ${({ theme }) => theme.colors.backgrounds.app};
-`;
 
 export default RequireAuth;

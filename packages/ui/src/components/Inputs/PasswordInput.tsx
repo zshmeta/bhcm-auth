@@ -1,3 +1,4 @@
+import React from "react";
 import { forwardRef, useState, type InputHTMLAttributes } from "react";
 import styled from "styled-components";
 import { toRgba } from "../../theme/tokens";
@@ -127,7 +128,7 @@ const calculateStrength = (password: string): number => {
 	return Math.min(strength, 100);
 };
 
-export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
+const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
 	({ label, error, helpText, showStrength = false, value, onChange, ...props }, ref) => {
 		const [showPassword, setShowPassword] = useState(false);
 		const [localValue, setLocalValue] = useState('');

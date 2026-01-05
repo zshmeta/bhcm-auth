@@ -64,5 +64,5 @@ export { registerAuthRoutes } from "./routes/auth.routes.js";
 // Security utilities
 export { createBcryptHasher } from "./security/hasher.js";
 export type { SecretHasher } from "./security/hasher.js";
-export { createJwtTokenManager } from "./security/tokens.js";
-export type { TokenManager, AccessTokenClaims, RefreshTokenClaims } from "./security/tokens.js";
+export { createJwtTokenManager } from "./tokens/tokens.js";
+export type { TokenManager, AccessTokenClaims, RefreshTokenClaims } from "./tokens/tokens.js";

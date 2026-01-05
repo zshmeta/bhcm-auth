@@ -25,6 +25,8 @@
   "packageManager": "npm@11.6.2",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "eslint-config",
+    "typescript-config"
   ]
 }

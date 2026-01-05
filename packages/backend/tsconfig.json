@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "@repo/typescript-config/base.json",
+  "extends": "../../typescript-config/base.json",
   "ignoreDeprecations": "6.0",
   "compilerOptions": {
     "outDir": "dist",
